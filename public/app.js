@@ -314,145 +314,82 @@ async function fireworkShow(seconds = 5) {
 }
 
 /* =========================================================
-   MUSIQA VA WEB AUDIO AMBIENT SINTIZATORI
+   MUSIQA BOSHQARUVI (MP3 VA AUDIOCONTROL)
    ========================================================= */
 const musicAudio = $("#music");
 const musicToggleBtn = $("#music-toggle");
+const musicIcon = $("#music-icon");
 let isAudioMuted = false;
-let webAudioSynth = null;
-let musicStarted = false;
+let musicLoaded = false;
 
-// Foydalanuvchi mp3 qo'ymagan bo'lsa, chiroyli romantik musiqa qutisi (music box) chalinadi
-class AmbientMusicBox {
-  constructor() {
-    this.ctx = null;
-    this.isPlaying = false;
-    this.timer = null;
-    // Chiroyli ohang notalari (C major / pentatonic lofi melody)
-    this.notes = [
-      261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99,
-      523.25, 392.00, 329.63, 293.66, 349.23, 440.00, 523.25
-    ];
-    this.noteIdx = 0;
-  }
-
-  init() {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    this.ctx = new AudioCtx();
-  }
-
-  playPluck(freq, time) {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, time);
-
-    // Mayin musiqiy qo'ng'iroqcha konverti (chime / kalimba)
-    gain.gain.setValueAtTime(0.001, time);
-    gain.gain.exponentialRampToValueAtTime(0.12, time + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 1.8);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 1.85);
-  }
-
-  start() {
-    if (this.isPlaying) return;
-    if (!this.ctx) this.init();
-    if (this.ctx && this.ctx.state === "suspended") {
-      this.ctx.resume();
-    }
-    this.isPlaying = true;
-    this.scheduleNotes();
-  }
-
-  scheduleNotes() {
-    if (!this.isPlaying || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    const freq = this.notes[this.noteIdx % this.notes.length];
-    this.playPluck(freq, now);
-
-    // Ba'zan akkord berish
-    if (this.noteIdx % 4 === 0) {
-      this.playPluck(freq * 0.5, now);
-    }
-
-    this.noteIdx++;
-    const delay = 480 + (this.noteIdx % 3 === 0 ? 300 : 0);
-    this.timer = setTimeout(() => this.scheduleNotes(), delay);
-  }
-
-  stop() {
-    this.isPlaying = false;
-    if (this.timer) clearTimeout(this.timer);
-    if (this.ctx && this.ctx.state !== "closed") {
-      this.ctx.suspend().catch(() => {});
-    }
-  }
-}
-
-function startMusic() {
-  if (musicStarted) return;
-  musicStarted = true;
-  musicToggleBtn.classList.remove("hidden");
-  musicToggleBtn.classList.add("playing");
-
-  if (content && content.music) {
+function setupAudioSource() {
+  if (content && content.music && !musicLoaded) {
     musicAudio.src = content.music;
-    musicAudio.volume = 0;
-    musicAudio.play().then(() => {
-      fadeAudioVolume(musicAudio, 0.65, 3000);
-    }).catch(() => {
-      // Autoplay xatosi bo'lsa synth ga o'tadi
-      fallbackToSynth();
-    });
-  } else {
-    fallbackToSynth();
+    musicAudio.preload = "auto";
+    musicAudio.load();
+    musicLoaded = true;
   }
 }
 
-function fallbackToSynth() {
-  webAudioSynth = new AmbientMusicBox();
-  webAudioSynth.start();
+function startMusicPlayback() {
+  if (isAudioMuted) return;
+  setupAudioSource();
+
+  try {
+    musicAudio.volume = 1.0;
+  } catch (_) {}
+
+  const playPromise = musicAudio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      musicToggleBtn.classList.remove("muted");
+      musicToggleBtn.classList.add("playing");
+      if (musicIcon) musicIcon.textContent = "🎵";
+    }).catch((err) => {
+      console.warn("Autoplay block:", err);
+      // Agar autoplay bloklansa, foydalanuvchi ekranga teginishi bilan darhol yoqiladi
+      enableAudioOnFirstGesture();
+    });
+  }
 }
 
-function fadeAudioVolume(audioEl, targetVol, durationMs) {
-  const startVol = audioEl.volume;
-  const startTime = performance.now();
-  const step = (t) => {
-    const elapsed = t - startTime;
-    const factor = Math.min(1, elapsed / durationMs);
-    audioEl.volume = startVol + (targetVol - startVol) * factor;
-    if (factor < 1 && !isAudioMuted) {
-      requestAnimationFrame(step);
-    }
-  };
-  requestAnimationFrame(step);
-}
-
-musicToggleBtn.addEventListener("click", () => {
-  isAudioMuted = !isAudioMuted;
-  if (isAudioMuted) {
+function toggleAudio() {
+  setupAudioSource();
+  if (musicAudio.paused) {
+    isAudioMuted = false;
+    musicAudio.volume = 1.0;
+    musicAudio.play().then(() => {
+      musicToggleBtn.classList.remove("muted");
+      musicToggleBtn.classList.add("playing");
+      if (musicIcon) musicIcon.textContent = "🎵";
+    }).catch((e) => console.log(e));
+  } else {
+    isAudioMuted = true;
+    musicAudio.pause();
     musicToggleBtn.classList.add("muted");
     musicToggleBtn.classList.remove("playing");
-    if (musicAudio && !musicAudio.paused) musicAudio.pause();
-    if (webAudioSynth) webAudioSynth.stop();
-  } else {
-    musicToggleBtn.classList.remove("muted");
-    musicToggleBtn.classList.add("playing");
-    if (content && content.music) {
-      musicAudio.play().catch(() => {});
-    } else if (webAudioSynth) {
-      webAudioSynth.start();
-    }
+    if (musicIcon) musicIcon.textContent = "🔇";
   }
-});
+}
+
+musicToggleBtn.addEventListener("click", toggleAudio);
+
+function enableAudioOnFirstGesture() {
+  const resume = () => {
+    if (!isAudioMuted && musicAudio.paused) {
+      musicAudio.volume = 1.0;
+      musicAudio.play().then(() => {
+        musicToggleBtn.classList.remove("muted");
+        musicToggleBtn.classList.add("playing");
+        if (musicIcon) musicIcon.textContent = "🎵";
+      }).catch(() => {});
+    }
+    window.removeEventListener("click", resume);
+    window.removeEventListener("touchstart", resume);
+  };
+  window.addEventListener("click", resume, { once: true });
+  window.addEventListener("touchstart", resume, { once: true });
+}
 
 /* =========================================================
    1. QULFLANGAN EKRAN (YARIM KECHAGACHA SANASH)
@@ -506,7 +443,6 @@ async function checkStatusAndInit() {
   }, 250);
 }
 
-// Brauzer tab faol bo'lganda vaqtni qayta tekshirib olish
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && currentScene === "lock") {
     checkStatusAndInit();
@@ -517,7 +453,6 @@ async function loadContentAndUnlock() {
   try {
     const res = await fetch("/api/content");
     if (!res.ok) {
-      // Agar server hali ruxsat bermagan bo'lsa 1.5 soniyadan keyin qayta so'raymiz
       setTimeout(loadContentAndUnlock, 1500);
       return;
     }
@@ -527,9 +462,10 @@ async function loadContentAndUnlock() {
     return;
   }
 
-  // Sahifa sarlavhasi va ism o'rnatiladi
   document.title = `✨ ${content.name} ✨`;
   $("#intro-name").textContent = content.name;
+
+  setupAudioSource();
 
   // Rasmlarni brauzer keshiga oldindan yuklab qo'yish
   if (content.photos && content.photos.length) {
@@ -546,7 +482,7 @@ async function loadContentAndUnlock() {
    2. SOVG'A QUTISI VA KIRISH
    ========================================================= */
 $("#open-btn").addEventListener("click", async () => {
-  startMusic();
+  startMusicPlayback();
   $("#open-btn").classList.add("hidden");
 
   // Markazdan salyut va konfetti portlashi
@@ -580,7 +516,7 @@ function buildCakeCandles() {
   const box = $("#candles");
   box.innerHTML = "";
   isCakeFinished = false;
-  candlesCount = content.candles || 5;
+  candlesCount = content.candles || 7;
   candlesRemaining = candlesCount;
 
   for (let i = 0; i < candlesCount; i++) {
@@ -693,7 +629,6 @@ function initBlowDetection(stream) {
     if (blowCooldown > 0) blowCooldown--;
 
     if (blowStreak >= 4 && blowCooldown === 0 && activeCandles.length > 0) {
-      // Tasodifiy bitta shamni o'chiramiz
       const target = activeCandles[(Math.random() * activeCandles.length) | 0];
       blowOutCandle(target);
       blowCooldown = 12;
@@ -747,7 +682,6 @@ function buildStarField() {
   const total = content.photos.length;
   updateStarsCounter();
 
-  // Yulduzlarni ekranda optimal va bir-biridan masofali joylashtirish
   const placedCoords = [];
   content.photos.forEach((photoObj, idx) => {
     let x, y, attempts = 0;
@@ -799,17 +733,14 @@ function closePolaroidModal() {
 $("#modal-close").addEventListener("click", closePolaroidModal);
 $(".modal-backdrop").addEventListener("click", closePolaroidModal);
 
-// "Osmonga qara" tugmasi bosilganda yulduzlar ism shakliga yig'iladi
 $("#form-name").addEventListener("click", async () => {
   $("#form-name").classList.add("hidden");
   $("#stars-title").classList.add("hidden");
   $("#stars-count").classList.add("hidden");
 
-  // Katta sariq yulduzlar yo'qoladi
   document.querySelectorAll(".wish-star").forEach((btn) => btn.classList.add("gone"));
   await sleep(400);
 
-  // Yulduzlar uning ismi shakliga yig'iladi
   formName(content.name);
   await sleep(1200);
 
@@ -822,7 +753,6 @@ $("#form-name").addEventListener("click", async () => {
 });
 
 $("#to-letter").addEventListener("click", () => {
-  // Yulduzlar yana osmonga qaytariladi
   stars.forEach((s) => {
     s.tx = Math.random() * W;
     s.ty = Math.random() * H;
@@ -869,7 +799,7 @@ async function typeOutLetter() {
   cursor.className = "cursor";
   textContainer.appendChild(cursor);
 
-  // Qog'ozga bosilganda tezlashtirish (darhol to'liq chiqarish)
+  // Qog'ozga bosilganda darhol to'liq chiqarish
   $("#paper").addEventListener("click", () => {
     isTypingFastForward = true;
   });
@@ -880,14 +810,12 @@ async function typeOutLetter() {
     const line = lines[l];
     for (let c = 0; c < line.length; c++) {
       if (isTypingFastForward) {
-        // Darhol to'liq matnni chiqarish
         cursor.before(line.slice(c));
         break;
       }
       const char = line[c];
       cursor.before(char);
 
-      // Tinish belgilarida o'ylanib to'xtash
       let delay = 35;
       if (char === "." || char === "!" || char === "?") delay = 350;
       else if (char === "," || char === ";") delay = 220;
@@ -902,7 +830,6 @@ async function typeOutLetter() {
     }
   }
 
-  // Imzo qismi
   const sigContainer = document.createElement("span");
   sigContainer.className = "sig";
   cursor.before(sigContainer);

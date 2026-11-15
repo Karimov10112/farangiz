@@ -18,9 +18,9 @@
   <canvas id="bg"></canvas>
   <canvas id="fx"></canvas>
 
-  <!-- Musiqa boshqaruvi tugmasi (burchakda) -->
-  <button id="music-toggle" class="music-btn hidden" aria-label="Musiqani yoqish/o'chirish">
-    <span class="music-icon">🎵</span>
+  <!-- Musiqa boshqaruvi tugmasi (yuqori o'ng burchakda) -->
+  <button id="music-toggle" class="music-btn" aria-label="Musiqani yoqish yoki o'chirish">
+    <span id="music-icon" class="music-icon">🎵</span>
   </button>
 
   <!-- 1. Qulflangan ekran (yarim kechagacha) -->
@@ -33,7 +33,7 @@
       <div class="cd-box"><span id="cd-m">00</span><small>daqiqa</small></div>
       <div class="cd-box"><span id="cd-s">00</span><small>soniya</small></div>
     </div>
-    <p class="sub">00:00 bo'lganda sahifa avtomatik ochiladi 🌙</p>
+    <p class="sub">26-noyabr 00:00 da sahifa o'zi ochiladi 🌙</p>
   </section>
 
   <!-- 2. Sovg'a qutisi va kirish -->
@@ -45,7 +45,7 @@
     
     <div id="intro-text" class="intro-text">
       <p class="small-caps">Tug'ilgan kuning bilan</p>
-      <h1 id="intro-name" class="script gold-pink-shine"></h1>
+      <h1 id="intro-name" class="script gold-pink-shine">Farangiz</h1>
     </div>
     
     <button id="to-cake" class="btn ghost hidden">Davom etish →</button>
@@ -77,7 +77,7 @@
   <section id="stars" class="scene">
     <div class="stars-header">
       <p id="stars-title" class="title">Har bir yulduzda — sen 🌟</p>
-      <p id="stars-count" class="sub">0 / 0 — yulduzlarga bos</p>
+      <p id="stars-count" class="sub">0 / 7 — yulduzlarga bos</p>
     </div>
     
     <div id="star-field"></div>
@@ -138,13 +138,13 @@
       <div id="reply-done" class="reply-success hidden">
         <span class="heart-icon">💖</span>
         <h3>Yetib keldi ❤️</h3>
-        <p>Xabaring saqlandi, rahmat azizam!</p>
+        <p>Xabaring saqlandi, rahmat Hanuyim!</p>
       </div>
     </div>
   </section>
 
-  <!-- Audio element (config da fayl bo'lsa) -->
-  <audio id="music" loop preload="auto"></audio>
+  <!-- Audio element (Kara Sevda) -->
+  <audio id="music" loop preload="auto" playsinline webkit-playsinline></audio>
 
   <script src="app.js"></script>
 </body>
