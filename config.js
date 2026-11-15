@@ -4,20 +4,19 @@
 // ============================================================
 
 module.exports = {
-  // 1. Uning ismi (kirishda, sarlavhada va yulduzlardan shu ism yig'iladi)
+  // 1. Uning ismi
   name: "Farangiz",
 
-  // 2. Sinov vaqti: 00:43 da avtomatik ochiladi (ko'rish uchun)
-  unlockAt: "2026-11-16T00:43:00+05:00",
+  // 2. Sinov vaqti: 00:45 da avtomatik ochiladi
+  unlockAt: "2026-11-16T00:45:00+05:00",
 
   // 3. Sinov rejimi:
-  // false -> vaqti kelganda avtomatik ochilishini ko'rish uchun!
   testMode: false,
 
-  // 4. Tortdagi shamlar soni (har bir rasm uchun bittadan - 7 ta sham)
+  // 4. Tortdagi shamlar soni: 7 ta
   candles: 7,
 
-  // 5. Rasmlar va har bir rasm uchun chin dildan yozilgan sevgi jumlalari
+  // 5. Rasmlar va chin dildan yozilgan sevgi jumlalari
   photos: [
     {
       file: "photo1.jpg",
@@ -49,7 +48,7 @@ module.exports = {
     }
   ],
 
-  // 6. Konvert ichidagi xat
+  // 6. Xat
   letter: {
     greeting: "Hanuyim,",
     paragraphs: [
@@ -60,21 +59,20 @@ module.exports = {
     signature: "Seni juda sog'ingan inson Dududan ❤️"
   },
 
-  // 7. Eng oxirgi sahifa (Final)
+  // 7. Final
   finalMessage: {
     title: "Bu hali hammasi emas...",
     text: "Eng muhimi seni kechqurun kutyapti. Soat 18:00 da tayyor tur. Har doimgi joyda ❤️"
   },
 
-  // 8. Fon musiqasi ("Kara Sevda")
+  // 8. Musiqa
   music: "music.mp3",
 
-  // 9. U sizga javob yoza olsinmi? (ha)
+  // 9. Ruxsat
   allowReply: true,
 
-  // 10. Javoblarni ko'rish paroli: /admin/replies?key=bubuvadudu
+  // 10. Admin paroli
   adminKey: "bubuvadudu",
 
-  // Server porti
   port: 3000
 };
