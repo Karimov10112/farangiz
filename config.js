@@ -7,12 +7,11 @@ module.exports = {
   // 1. Uning ismi (kirishda, sarlavhada va yulduzlardan shu ism yig'iladi)
   name: "Farangiz",
 
-  // 2. Sayt aynan shu vaqtda ochiladi (Toshkent vaqti: +05:00)
-  unlockAt: "2026-11-26T00:00:00+05:00",
+  // 2. Sinov vaqti: 00:43 da avtomatik ochiladi (ko'rish uchun)
+  unlockAt: "2026-11-16T00:43:00+05:00",
 
   // 3. Sinov rejimi:
-  // false -> faqat 26-noyabr 00:00 da ochiladi (Hozir qulflangan holatda!)
-  // true  -> test qilish uchun darhol ochish
+  // false -> vaqti kelganda avtomatik ochilishini ko'rish uchun!
   testMode: false,
 
   // 4. Tortdagi shamlar soni (har bir rasm uchun bittadan - 7 ta sham)
