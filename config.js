@@ -11,9 +11,9 @@ module.exports = {
   unlockAt: "2026-11-26T00:00:00+05:00",
 
   // 3. Sinov rejimi:
-  // true  -> saytni hozir o'zingiz to'liq ko'rib sinashingiz uchun darhol ochiladi
-  // false -> faqat 26-noyabr 00:00 da ochiladi (yuborishdan oldin false qilasiz!)
-  testMode: true,
+  // false -> faqat 26-noyabr 00:00 da ochiladi (Hozir qulflangan holatda!)
+  // true  -> test qilish uchun darhol ochish
+  testMode: false,
 
   // 4. Tortdagi shamlar soni (har bir rasm uchun bittadan - 7 ta sham)
   candles: 7,
