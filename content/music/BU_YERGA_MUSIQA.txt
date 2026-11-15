@@ -1,0 +1,1 @@
+Bu yerga musiqa faylini tashlang (masalan music.mp3) va config.js da nomini yozing.

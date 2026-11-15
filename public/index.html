@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#07051a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>✨ Tug'ilgan kuning bilan! ✨</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Great+Vibes&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Fon yulduzlari va effektlar kanvasi -->
+  <canvas id="bg"></canvas>
+  <canvas id="fx"></canvas>
+
+  <!-- Musiqa boshqaruvi tugmasi (burchakda) -->
+  <button id="music-toggle" class="music-btn hidden" aria-label="Musiqani yoqish/o'chirish">
+    <span class="music-icon">🎵</span>
+  </button>
+
+  <!-- 1. Qulflangan ekran (yarim kechagacha) -->
+  <section id="lock" class="scene">
+    <div class="moon"></div>
+    <p class="hint">Hali erta... kutib tur ✨</p>
+    <div class="countdown">
+      <div class="cd-box"><span id="cd-d">00</span><small>kun</small></div>
+      <div class="cd-box"><span id="cd-h">00</span><small>soat</small></div>
+      <div class="cd-box"><span id="cd-m">00</span><small>daqiqa</small></div>
+      <div class="cd-box"><span id="cd-s">00</span><small>soniya</small></div>
+    </div>
+    <p class="sub">00:00 bo'lganda sahifa avtomatik ochiladi 🌙</p>
+  </section>
+
+  <!-- 2. Sovg'a qutisi va kirish -->
+  <section id="intro" class="scene">
+    <button id="open-btn" class="gift" aria-label="Sovg'ani ochish">
+      <span class="gift-box">🎁</span>
+      <span class="gift-label">Bos</span>
+    </button>
+    
+    <div id="intro-text" class="intro-text">
+      <p class="small-caps">Tug'ilgan kuning bilan</p>
+      <h1 id="intro-name" class="script gold-pink-shine"></h1>
+    </div>
+    
+    <button id="to-cake" class="btn ghost hidden">Davom etish →</button>
+  </section>
+
+  <!-- 3. Tort va shamlar -->
+  <section id="cake" class="scene">
+    <p id="cake-title" class="title">Tilak qil... va puflab o'chir 🎂</p>
+    
+    <div class="cake-wrapper">
+      <div class="cake">
+        <div id="candles" class="candles"></div>
+        <div class="layer top"></div>
+        <div class="layer mid"></div>
+        <div class="layer bot"></div>
+        <div class="plate"></div>
+      </div>
+    </div>
+
+    <div class="cake-controls">
+      <button id="mic-btn" class="btn glow">🎤 Puflashni boshlash</button>
+      <p id="cake-hint" class="sub">Mikrofonga puflang yoki shamlarga bosing 👆</p>
+    </div>
+
+    <button id="to-stars" class="btn ghost hidden">Davom etish →</button>
+  </section>
+
+  <!-- 4. Yulduzli osmon va polaroid rasmlar -->
+  <section id="stars" class="scene">
+    <div class="stars-header">
+      <p id="stars-title" class="title">Har bir yulduzda — sen 🌟</p>
+      <p id="stars-count" class="sub">0 / 0 — yulduzlarga bos</p>
+    </div>
+    
+    <div id="star-field"></div>
+    
+    <button id="form-name" class="btn glow hidden">✨ Osmonga qara</button>
+    <button id="to-letter" class="btn glow hidden">Senga xat bor 💌</button>
+  </section>
+
+  <!-- Polaroid modal oyna -->
+  <div id="photo-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="polaroid-card">
+      <div class="polaroid-inner">
+        <div class="photo-frame">
+          <img id="modal-img" src="" alt="Xotira rasmi" />
+        </div>
+        <p id="modal-text" class="handwritten"></p>
+      </div>
+      <button id="modal-close" class="btn close-btn">Yopish</button>
+    </div>
+  </div>
+
+  <!-- 5. Konvert va xat -->
+  <section id="letter" class="scene">
+    <div id="envelope-wrap" class="envelope-wrap">
+      <div id="envelope" class="envelope">
+        <div class="env-back"></div>
+        <div class="env-flap"></div>
+        <div class="env-front"></div>
+        <div class="seal">❤️</div>
+      </div>
+      <p id="env-hint" class="sub">Konvertni ochish uchun bos 💌</p>
+    </div>
+
+    <div id="paper" class="paper hidden">
+      <div class="paper-lines">
+        <div id="letter-text" class="letter-content handwritten"></div>
+      </div>
+      <p class="paper-hint">Tezlashtirish uchun qog'ozga bosing ⚡</p>
+    </div>
+
+    <button id="to-final" class="btn ghost hidden">Davom etish →</button>
+  </section>
+
+  <!-- 6. Final -->
+  <section id="final" class="scene">
+    <div class="final-container">
+      <h2 id="final-title" class="script big-gold"></h2>
+      <p id="final-text" class="final-sub"></p>
+      
+      <form id="reply-form" class="reply-box hidden">
+        <label for="reply-text" class="reply-label">Menga bir nima desang...</label>
+        <textarea id="reply-text" maxlength="2000" placeholder="Dil so'zlaringni shu yerga yoz..."></textarea>
+        <button id="reply-btn" class="btn glow" type="submit">Yuborish 💌</button>
+        <p id="reply-error" class="error-msg hidden"></p>
+      </form>
+      
+      <div id="reply-done" class="reply-success hidden">
+        <span class="heart-icon">💖</span>
+        <h3>Yetib keldi ❤️</h3>
+        <p>Xabaring saqlandi, rahmat azizam!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audio element (config da fayl bo'lsa) -->
+  <audio id="music" loop preload="auto"></audio>
+
+  <script src="app.js"></script>
+</body>
+</html>
