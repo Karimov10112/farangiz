@@ -18,35 +18,35 @@ module.exports = {
   // 4. Tortdagi shamlar soni (har bir rasm uchun bittadan - 7 ta sham)
   candles: 7,
 
-  // 5. Rasmlar va har bir rasm uchun maxsus jumlalar
+  // 5. Rasmlar va har bir rasm uchun chin dildan yozilgan sevgi jumlalari
   photos: [
     {
       file: "photo1.jpg",
-      text: "Mening eng erka, eng yoqimtoy yaproq tojlari malikasi ✨"
+      text: "Sen hatto oddiy yaproqni ham toj qilib kiyishing mumkin, chunki mening dunyomda baribir tenging yo'q."
     },
     {
       file: "photo2.jpg",
-      text: "Yuzingni berkitma... Ko'zlaringdagi sehr butun olamni yoritadi 🍂"
+      text: "Yuzingni berkitib olsang ham, seni minglab odamlar orasidan birgina nafasingdan tanib olaman."
     },
     {
       file: "photo3.jpg",
-      text: "Shu tabassumingni ko'rgan har bir onimda qalbim yayraydi 🌸"
+      text: "Dunyoda eng chiroyli manzara nima bilasanmi? Sen kulyapsan, men esa senga qarab to'ymayapman."
     },
     {
       file: "photo4.jpg",
-      text: "Arazlaganingda ham shunaqangi shirin bo'lib ketasanki... 🥰"
+      text: "Arazlab, labingni burishtirib olganingda ham... qasam ichaman, dunyodagi eng chiroyli inson o'zing bo'lasan."
     },
     {
       file: "photo5.jpg",
-      text: "Sen bilan har bir kun — eng unutilmas sarguzasht, quvnoq qizalog'im 🎸💫"
+      text: "Sen bilan bo'lganimda butun dunyoning dardi unutiladi. Sen mening eng beg'ubor quvonchimsan."
     },
     {
       file: "photo6.jpg",
-      text: "Kuzning barcha oltin barglari ham sening go'zalliging oldida ojiz 👑💖"
+      text: "Odamlar maqtaydigan oltin kuz ham, sening bitta mayin nigohing oldida oddiygina xazon, xolos."
     },
     {
       file: "photo7.jpg",
-      text: "Sen mening hayotimdagi eng sokin va eng shirin mo'jizamsan ✌️❤️"
+      text: "Qayerda bo'lmaylik, nima bo'lishidan qat'i nazar — mening qalbim doim sen bilan, Hanuyim."
     }
   ],
 
