@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Fon yulduzlari va effektlar kanvasi -->
+  <!-- Fon yulduzlari va sehrli sensor zarrachalari kanvasi -->
   <canvas id="bg"></canvas>
   <canvas id="fx"></canvas>
 
@@ -77,13 +77,13 @@
   <section id="stars" class="scene">
     <div class="stars-header">
       <p id="stars-title" class="title">Har bir yulduzda — sen 🌟</p>
-      <p id="stars-count" class="sub">0 / 7 — yulduzlarga bos</p>
+      <p id="stars-count" class="sub">0 / 11 — yulduzlarga bos</p>
     </div>
     
     <div id="star-field"></div>
     
     <button id="form-name" class="btn glow hidden">✨ Osmonga qara</button>
-    <button id="to-letter" class="btn glow hidden">Senga xat bor 💌</button>
+    <button id="to-heartbeat" class="btn glow hidden">Yuragimni his qil 💓</button>
   </section>
 
   <!-- Polaroid modal oyna -->
@@ -99,6 +99,23 @@
       <button id="modal-close" class="btn close-btn">Yopish</button>
     </div>
   </div>
+
+  <!-- 4.5. Qalb urishi sahnasi (Haptic Heartbeat) -->
+  <section id="heartbeat" class="scene">
+    <div class="heartbeat-container">
+      <div id="pulse-heart" class="pulse-heart">
+        <span class="heart-symbol">❤️</span>
+        <div class="pulse-ring ring1"></div>
+        <div class="pulse-ring ring2"></div>
+      </div>
+      <p id="heart-instruction" class="heart-hint">Barmog'ingni yurakka 3 soniya bosib tur... ❤️</p>
+      <div id="heart-progress-bar" class="heart-progress-bar"><div id="heart-progress" class="heart-progress"></div></div>
+      <div id="heart-revealed-text" class="heart-revealed hidden">
+        <p class="handwritten heart-quote">«Mening yuragim har soniya faqat sen deb uradi, Hanuyim...»</p>
+        <button id="to-letter" class="btn glow">Senga xat bor 💌</button>
+      </div>
+    </div>
+  </section>
 
   <!-- 5. Konvert va xat -->
   <section id="letter" class="scene">
@@ -128,20 +145,37 @@
       <h2 id="final-title" class="script big-gold"></h2>
       <p id="final-text" class="final-sub"></p>
       
+      <!-- Sirli tugma (Easter egg) -->
+      <button id="secret-btn" class="secret-btn">🙈 Faqat bu tugmaga bosma!</button>
+
       <form id="reply-form" class="reply-box hidden">
         <label for="reply-text" class="reply-label">Menga bir nima desang...</label>
         <textarea id="reply-text" maxlength="2000" placeholder="Dil so'zlaringni shu yerga yoz..."></textarea>
         <button id="reply-btn" class="btn glow" type="submit">Yuborish 💌</button>
         <p id="reply-error" class="error-msg hidden"></p>
       </form>
+
+      <!-- Osmonga uchib ketadigan qog'oz samolyotcha -->
+      <div id="flying-plane" class="flying-plane hidden">✈️💌</div>
       
       <div id="reply-done" class="reply-success hidden">
         <span class="heart-icon">💖</span>
         <h3>Yetib keldi ❤️</h3>
-        <p>Xabaring saqlandi, rahmat Hanuyim!</p>
+        <p>Xating osmondan to'g'ri Duduga yetib bordi...</p>
       </div>
     </div>
   </section>
+
+  <!-- Sho'xlik modali (Secret Easter Egg Modal) -->
+  <div id="secret-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="secret-card">
+      <div class="secret-emoji">🥰</div>
+      <h3 class="secret-title">Baribir aytganimni qilmaysan-a, o'jarim...</h3>
+      <p class="secret-desc handwritten">Seni shuning uchun ham dunyodagi hammadan ko'proq yaxshi ko'raman ❤️</p>
+      <button id="secret-close" class="btn close-btn">Bilardim 🙈</button>
+    </div>
+  </div>
 
   <!-- Audio element (Kara Sevda) -->
   <audio id="music" loop preload="auto" playsinline webkit-playsinline></audio>

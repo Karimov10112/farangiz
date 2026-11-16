@@ -7,17 +7,16 @@ module.exports = {
   // 1. Uning ismi
   name: "Farangiz",
 
-  // 2. Sayt aynan shu vaqtda ochiladi (Toshkent vaqti: +05:00)
+  // 2. Sayt ochiladigan sana (26-noyabr 00:00:00)
   unlockAt: "2026-11-26T00:00:00+05:00",
 
-  // 3. Sinov rejimi:
-  // false -> faqat 26-noyabr 00:00 da ochiladi (HAQIQIY QULFLANGAN REJIM!)
+  // 3. Qulflangan rejim (vaqtida ochiladi)
   testMode: false,
 
-  // 4. Tortdagi shamlar soni: 7 ta
-  candles: 7,
+  // 4. Tortdagi shamlar soni: 11 ta (11 ta yulduz va rasmlarga moslab)
+  candles: 11,
 
-  // 5. Rasmlar va chin dildan yozilgan sevgi jumlalari
+  // 5. Rasmlar va har bir rasm uchun chin dildan yozilgan sevgi jumlalari (11 ta surat)
   photos: [
     {
       file: "photo1.jpg",
@@ -46,6 +45,22 @@ module.exports = {
     {
       file: "photo7.jpg",
       text: "Qayerda bo'lmaylik, nima bo'lishidan qat'i nazar — mening qalbim doim sen bilan, Hanuyim."
+    },
+    {
+      file: "photo8.jpg",
+      text: "Kulgichlaringni qo'ling bilan yashirma, sening samimiy kulging — mening eng qorong'i kunlarimga ham oftob olib kiradi."
+    },
+    {
+      file: "photo9.jpg",
+      text: "Ko'zlaring shunchalik chuqurki... ularga bir marta qaragan inson butun umr adashib qolishi mumkin."
+    },
+    {
+      file: "photo10.jpg",
+      text: "Dunyoning eng go'zal mo'jizasini birgina yaproq orqasiga yashirib qo'yish mumkin ekan..."
+    },
+    {
+      file: "photo11.jpg",
+      text: "Mening sportiv, erkatoy, eng zamonaviy va yagona sevgilim — sen bilan har bir soniyam bayram."
     }
   ],
 
@@ -66,13 +81,13 @@ module.exports = {
     text: "Eng muhimi seni kechqurun kutyapti. Soat 18:00 da tayyor tur. Har doimgi joyda ❤️"
   },
 
-  // 8. Musiqa
+  // 8. Musiqa ("Kara Sevda")
   music: "music.mp3",
 
   // 9. Ruxsat
   allowReply: true,
 
-  // 10. Admin paroli
+  // 10. Admin paroli: /admin/replies?key=bubuvadudu
   adminKey: "bubuvadudu",
 
   port: 3000

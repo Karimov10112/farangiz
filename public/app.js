@@ -1,5 +1,6 @@
 // =========================================================
 //  TUG'ILGAN KUN SSYURPRIZ SAYTI - FRONTEND KODI
+//  Farangiz uchun maxsus sehrli effektlar bilan
 // =========================================================
 
 const $ = (s) => document.querySelector(s);
@@ -112,7 +113,6 @@ function formName(text) {
   off.height = H;
   const o = off.getContext("2d");
 
-  // Shrift o'lchamini hisoblash
   const fontSize = Math.min(W / (Math.max(4, text.length) * 0.52), H * 0.26);
   o.font = `600 ${fontSize}px "Great Vibes", cursive, sans-serif`;
   o.textAlign = "center";
@@ -133,12 +133,10 @@ function formName(text) {
     }
   }
 
-  // Tasodifiy tartibda aralashtirish
   namePoints.sort(() => Math.random() - 0.5);
 
   const needed = Math.min(namePoints.length, 1200);
 
-  // Yulduzlar soni yetmasa qo'shamiz
   while (stars.length < needed) {
     stars.push({
       x: Math.random() * W,
@@ -155,7 +153,6 @@ function formName(text) {
     });
   }
 
-  // Har bir yulduzga ism koordinatasi beriladi
   stars.forEach((st, i) => {
     if (i < needed) {
       st.tx = namePoints[i].x;
@@ -172,13 +169,43 @@ function formName(text) {
 }
 
 /* =========================================================
-   EFFEKTLAR: SALYUT, KONFETTI VA METEOR
+   EFFEKTLAR: SALYUT, KONFETTI, METEOR VA SEHRLI BARMOQ IZI
    ========================================================= */
 const fxCanvas = $("#fx");
 const fctx = fxCanvas.getContext("2d");
 let particles = [];
 let fxRunning = false;
 const FX_COLORS = ["#ffd98a", "#ff8fb8", "#ffffff", "#8ec5ff", "#c89bff", "#ff6b8b", "#ffe57f"];
+
+// Sehrli barmoq izi (Magic Touch Trail)
+function addTouchParticles(x, y) {
+  for (let i = 0; i < 3; i++) {
+    particles.push({
+      kind: Math.random() < 0.4 ? "touchHeart" : "touchSpark",
+      x: x + (Math.random() - 0.5) * 14,
+      y: y + (Math.random() - 0.5) * 14,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: -1 - Math.random() * 1.5,
+      size: 3 + Math.random() * 5,
+      life: 28 + Math.random() * 12,
+      maxLife: 40,
+      color: FX_COLORS[(Math.random() * FX_COLORS.length) | 0],
+    });
+  }
+  triggerFxLoop();
+}
+
+window.addEventListener("touchmove", (e) => {
+  if (e.touches && e.touches[0]) {
+    addTouchParticles(e.touches[0].clientX, e.touches[0].clientY);
+  }
+}, { passive: true });
+
+window.addEventListener("mousemove", (e) => {
+  if (Math.random() < 0.5) {
+    addTouchParticles(e.clientX, e.clientY);
+  }
+});
 
 function shootingStar() {
   const startX = Math.random() * W * 0.75;
@@ -259,6 +286,20 @@ function triggerFxLoop() {
         fctx.beginPath();
         fctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
         fctx.fill();
+      } else if (p.kind === "touchSpark") {
+        p.x += p.vx;
+        p.y += p.vy;
+        fctx.globalAlpha = p.life / p.maxLife;
+        fctx.fillStyle = p.color;
+        fctx.beginPath();
+        fctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+        fctx.fill();
+      } else if (p.kind === "touchHeart") {
+        p.x += p.vx;
+        p.y += p.vy;
+        fctx.globalAlpha = p.life / p.maxLife;
+        fctx.font = `${p.size * 2}px sans-serif`;
+        fctx.fillText("❤️", p.x, p.y);
       } else if (p.kind === "confetti") {
         p.x += p.vx + Math.sin(p.y / 28) * 0.8;
         p.y += p.vy;
@@ -314,7 +355,7 @@ async function fireworkShow(seconds = 5) {
 }
 
 /* =========================================================
-   MUSIQA BOSHQARUVI (MP3 VA AUDIOCONTROL)
+   MUSIQA BOSHQARUVI
    ========================================================= */
 const musicAudio = $("#music");
 const musicToggleBtn = $("#music-toggle");
@@ -347,7 +388,6 @@ function startMusicPlayback() {
       if (musicIcon) musicIcon.textContent = "🎵";
     }).catch((err) => {
       console.warn("Autoplay block:", err);
-      // Agar autoplay bloklansa, foydalanuvchi ekranga teginishi bilan darhol yoqiladi
       enableAudioOnFirstGesture();
     });
   }
@@ -412,7 +452,6 @@ async function checkStatusAndInit() {
     return loadContentAndUnlock();
   }
 
-  // Server vaqti bilan mijoz vaqti farqi
   serverOffset = statusData.serverNow - Date.now();
   showScene("lock");
 
@@ -467,7 +506,6 @@ async function loadContentAndUnlock() {
 
   setupAudioSource();
 
-  // Rasmlarni brauzer keshiga oldindan yuklab qo'yish
   if (content.photos && content.photos.length) {
     content.photos.forEach((p) => {
       const img = new Image();
@@ -485,14 +523,12 @@ $("#open-btn").addEventListener("click", async () => {
   startMusicPlayback();
   $("#open-btn").classList.add("hidden");
 
-  // Markazdan salyut va konfetti portlashi
   firework(W / 2, H * 0.45);
   confetti(150);
 
   await sleep(350);
   $("#intro-text").classList.add("show");
 
-  // 5 soniya salyut shousi
   await fireworkShow(5);
 
   $("#to-cake").classList.remove("hidden");
@@ -516,7 +552,7 @@ function buildCakeCandles() {
   const box = $("#candles");
   box.innerHTML = "";
   isCakeFinished = false;
-  candlesCount = content.candles || 7;
+  candlesCount = content.candles || 11;
   candlesRemaining = candlesCount;
 
   for (let i = 0; i < candlesCount; i++) {
@@ -524,7 +560,6 @@ function buildCakeCandles() {
     candleEl.className = "candle";
     candleEl.innerHTML = '<div class="flame"></div>';
 
-    // Barmoq bilan bosib o'chirish (touch va click)
     const handleExtinguish = (e) => {
       e.preventDefault();
       blowOutCandle(candleEl);
@@ -540,7 +575,6 @@ function blowOutCandle(candleEl) {
   if (!candleEl || candleEl.classList.contains("out")) return;
   candleEl.classList.add("out");
 
-  // Tutun zarrachalari
   for (let i = 0; i < 3; i++) {
     const smoke = document.createElement("div");
     smoke.className = "smoke-particle";
@@ -549,7 +583,6 @@ function blowOutCandle(candleEl) {
     candleEl.appendChild(smoke);
   }
 
-  // Telefon titrashi (vibratsiya)
   if (navigator.vibrate) {
     try { navigator.vibrate([35, 20, 35]); } catch (_) {}
   }
@@ -606,7 +639,6 @@ function initBlowDetection(stream) {
 
     analyser.getByteFrequencyData(freqBuf);
 
-    // Puflash shovqini: 30Hz - 250Hz oralig'idagi past chastotali kuchli shamol to'lqini
     let lowEnergy = 0;
     const checkBins = Math.min(30, freqBuf.length);
     for (let i = 1; i < checkBins; i++) {
@@ -616,7 +648,6 @@ function initBlowDetection(stream) {
 
     const activeCandles = [...document.querySelectorAll(".candle:not(.out)")];
 
-    // Sham olovlarining shamolda egilishi
     const isWobbling = avgEnergy > 60;
     activeCandles.forEach((c) => c.classList.toggle("wobble", isWobbling));
 
@@ -670,7 +701,7 @@ $("#to-stars").addEventListener("click", () => {
 });
 
 /* =========================================================
-   4. YULDUZLI OSMON VA POLAROID RASMLAR
+   4. YULDUZLI OSMON VA POLAROID RASMLAR (11 ta)
    ========================================================= */
 let seenStarsCount = 0;
 
@@ -686,12 +717,12 @@ function buildStarField() {
   content.photos.forEach((photoObj, idx) => {
     let x, y, attempts = 0;
     do {
-      x = 15 + Math.random() * 70;
-      y = 20 + Math.random() * 52;
+      x = 12 + Math.random() * 76;
+      y = 18 + Math.random() * 56;
       attempts++;
     } while (
       attempts < 100 &&
-      placedCoords.some(([px, py]) => Math.hypot((px - x) * W / 100, (py - y) * H / 100) < 80)
+      placedCoords.some(([px, py]) => Math.hypot((px - x) * W / 100, (py - y) * H / 100) < 65)
     );
     placedCoords.push([x, y]);
 
@@ -700,7 +731,7 @@ function buildStarField() {
     starBtn.textContent = "⭐";
     starBtn.style.left = `${x}%`;
     starBtn.style.top = `${y}%`;
-    starBtn.style.animationDelay = `${idx * 0.35}s`;
+    starBtn.style.animationDelay = `${idx * 0.25}s`;
 
     starBtn.addEventListener("click", () => openPolaroidModal(photoObj, starBtn));
     container.appendChild(starBtn);
@@ -749,10 +780,10 @@ $("#form-name").addEventListener("click", async () => {
   firework(W * 0.75, H * 0.25);
 
   await sleep(3500);
-  $("#to-letter").classList.remove("hidden");
+  $("#to-heartbeat").classList.remove("hidden");
 });
 
-$("#to-letter").addEventListener("click", () => {
+$("#to-heartbeat").addEventListener("click", () => {
   stars.forEach((s) => {
     s.tx = Math.random() * W;
     s.ty = Math.random() * H;
@@ -762,6 +793,74 @@ $("#to-letter").addEventListener("click", () => {
     makeStars();
   }, 2000);
 
+  showScene("heartbeat");
+});
+
+/* =========================================================
+   4.5. QALB URISHI SAHNASI (HAPTIC HEARTBEAT)
+   ========================================================= */
+const pulseHeartEl = $("#pulse-heart");
+const heartProgressEl = $("#heart-progress");
+let heartPressTimer = null;
+let heartHapticInterval = null;
+let heartProgressVal = 0;
+let heartCompleted = false;
+
+function startHeartPress() {
+  if (heartCompleted) return;
+  pulseHeartEl.classList.add("pressing");
+  heartProgressVal = 0;
+
+  // Har 450ms da yurak titrashi
+  if (navigator.vibrate) {
+    navigator.vibrate([70, 90, 70, 220]);
+    heartHapticInterval = setInterval(() => {
+      navigator.vibrate([70, 90, 70, 220]);
+    }, 450);
+  }
+
+  heartPressTimer = setInterval(() => {
+    heartProgressVal += 3.5;
+    heartProgressEl.style.width = `${Math.min(100, heartProgressVal)}%`;
+
+    if (heartProgressVal >= 100) {
+      finishHeartPress();
+    }
+  }, 100);
+}
+
+function stopHeartPress() {
+  if (heartCompleted) return;
+  pulseHeartEl.classList.remove("pressing");
+  if (heartPressTimer) clearInterval(heartPressTimer);
+  if (heartHapticInterval) clearInterval(heartHapticInterval);
+  heartProgressVal = 0;
+  heartProgressEl.style.width = "0%";
+}
+
+function finishHeartPress() {
+  heartCompleted = true;
+  pulseHeartEl.classList.remove("pressing");
+  if (heartPressTimer) clearInterval(heartPressTimer);
+  if (heartHapticInterval) clearInterval(heartHapticInterval);
+
+  if (navigator.vibrate) {
+    navigator.vibrate([120, 60, 120, 60, 200]);
+  }
+
+  confetti(80);
+  firework(W / 2, H * 0.4);
+
+  $("#heart-instruction").classList.add("hidden");
+  $("#heart-progress-bar").classList.add("hidden");
+  $("#heart-revealed-text").classList.remove("hidden");
+}
+
+pulseHeartEl.addEventListener("pointerdown", startHeartPress);
+pulseHeartEl.addEventListener("pointerup", stopHeartPress);
+pulseHeartEl.addEventListener("pointerleave", stopHeartPress);
+
+$("#to-letter").addEventListener("click", () => {
   showScene("letter");
 });
 
@@ -799,7 +898,6 @@ async function typeOutLetter() {
   cursor.className = "cursor";
   textContainer.appendChild(cursor);
 
-  // Qog'ozga bosilganda darhol to'liq chiqarish
   $("#paper").addEventListener("click", () => {
     isTypingFastForward = true;
   });
@@ -862,8 +960,21 @@ $("#to-final").addEventListener("click", async () => {
 });
 
 /* =========================================================
-   6. FINAL VA JAVOB YUBORISH
+   6. FINAL VA SIRLI TUGMA (EASTER EGG)
    ========================================================= */
+$("#secret-btn").addEventListener("click", () => {
+  confetti(150);
+  firework(W * 0.3, H * 0.3);
+  firework(W * 0.7, H * 0.3);
+  $("#secret-modal").classList.remove("hidden");
+});
+
+$("#secret-close").addEventListener("click", () => {
+  $("#secret-modal").classList.add("hidden");
+});
+
+$(".secret-card").addEventListener("click", (e) => e.stopPropagation());
+
 $("#reply-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const textarea = $("#reply-text");
@@ -874,8 +985,12 @@ $("#reply-form").addEventListener("submit", async (e) => {
   if (!text) return;
 
   submitBtn.disabled = true;
-  submitBtn.textContent = "Yuborilmoqda... ⏳";
+  submitBtn.textContent = "Uchirilmoqda... ✈️";
   errorMsg.classList.add("hidden");
+
+  // Samolyotcha animatsiyasini yoqish
+  const plane = $("#flying-plane");
+  plane.classList.remove("hidden");
 
   try {
     const res = await fetch("/api/reply", {
@@ -885,6 +1000,8 @@ $("#reply-form").addEventListener("submit", async (e) => {
     });
 
     if (res.ok) {
+      await sleep(1500);
+      plane.classList.add("hidden");
       $("#reply-form").classList.add("hidden");
       $("#reply-done").classList.remove("hidden");
       confetti(160);
@@ -893,6 +1010,7 @@ $("#reply-form").addEventListener("submit", async (e) => {
       throw new Error("Xatolik");
     }
   } catch (err) {
+    plane.classList.add("hidden");
     errorMsg.textContent = "Xabarni yuborishda xatolik yuz berdi. Qaytadan urinib ko'ring.";
     errorMsg.classList.remove("hidden");
     submitBtn.disabled = false;
@@ -908,7 +1026,6 @@ window.addEventListener("resize", () => {
   if (!formMode) makeStars();
 });
 
-// Boshlang'ich initsializatsiya
 resize();
 makeStars();
 drawBg();
