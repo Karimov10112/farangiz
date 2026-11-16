@@ -82,7 +82,13 @@
     
     <div id="star-field"></div>
     
-    <button id="form-name" class="btn glow hidden">✨ Osmonga qara</button>
+    <!-- Ism yig'ilganda chiqadigan nurli toj va matn -->
+    <div id="name-crown-wrap" class="name-crown-wrap hidden">
+      <span class="golden-crown">👑</span>
+      <p class="crown-sub handwritten">«Koinotdagi eng yorug' yulduzim — Farangiz»</p>
+    </div>
+
+    <button id="form-name" class="btn glow cosmic-btn hidden">✨ Osmonga qara</button>
     <button id="to-heartbeat" class="btn glow hidden">Yuragimni his qil 💓</button>
   </section>
 
@@ -100,9 +106,24 @@
     </div>
   </div>
 
-  <!-- 4.5. Qalb urishi sahnasi (Haptic Heartbeat) -->
+  <!-- 4.5. Qalb urishi va Tanishuv tarixi sahnasi (Haptic Heartbeat + Love Counter) -->
   <section id="heartbeat" class="scene">
     <div class="heartbeat-container">
+      <!-- 2026-yil 5-iyun tanishuv hisoblagichi -->
+      <div class="love-counter-box">
+        <p class="love-date-title">✨ 2026-yil 5-iyun — Hayotimga sen kirib kelgan kun</p>
+        <div class="love-days-display">
+          <div class="time-part"><span id="love-days-num">0</span><small>kun</small></div>
+          <div class="time-sep">:</div>
+          <div class="time-part"><span id="love-hours-num">0</span><small>soat</small></div>
+          <div class="time-sep">:</div>
+          <div class="time-part"><span id="love-mins-num">0</span><small>daqiqa</small></div>
+          <div class="time-sep">:</div>
+          <div class="time-part"><span id="love-secs-num">0</span><small>soniya</small></div>
+        </div>
+        <p class="love-subtext handwritten">«Sen bilan o'tgan har bir soniya — mening eng katta baxtim ❤️»</p>
+      </div>
+
       <div id="pulse-heart" class="pulse-heart">
         <span class="heart-symbol">❤️</span>
         <div class="pulse-ring ring1"></div>

@@ -61,6 +61,22 @@ module.exports = {
     {
       file: "photo11.jpg",
       text: "Mening sportiv, erkatoy, eng zamonaviy va yagona sevgilim — sen bilan har bir soniyam bayram."
+    },
+    {
+      file: "photo12.jpg",
+      text: "Kulgingni yashirolmaysan, Hanuyim — u xuddi quyosh kabi, qo'l bilan to'sib bo'lmaydi."
+    },
+    {
+      file: "photo13.jpg",
+      text: "Kuz barglari to'kilsa ham, sen yonimda bo'lsang — atrofimdagi hamma narsa baribir gullaydi."
+    },
+    {
+      file: "photo14.jpg",
+      text: "Yuzingni yashirmoqchi bo'lsang ham, yuragim seni har qanday niqob ortidan tanib oladi."
+    },
+    {
+      file: "photo15.jpg",
+      text: "Bu ikkita barmog'ing V belgisimi yoki dunyoga: 'Men baxtliman!' deyayapsanmi? Ikkalasi ham to'g'ri."
     }
   ],
 

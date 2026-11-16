@@ -17,7 +17,7 @@ function showScene(id) {
 }
 
 /* =========================================================
-   FON: YULDUZLI OSMON VA ISMNI YULDUZLARDAN YIG'ISH
+   FON: YULDUZLI OSMON VA CINEMATIC ISMNI YIG'ISH
    ========================================================= */
 const bgCanvas = $("#bg");
 const bctx = bgCanvas.getContext("2d");
@@ -28,6 +28,8 @@ let DPR = Math.min(window.devicePixelRatio || 1, 2);
 let stars = [];
 let formMode = false;
 let namePoints = [];
+let shockwaveRadius = 0;
+let shockwaveActive = false;
 
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -42,17 +44,19 @@ function resize() {
 }
 
 function makeStars() {
-  const count = Math.round(Math.min(450, (W * H) / 2000));
+  const count = Math.round(Math.min(500, (W * H) / 1800));
   stars = Array.from({ length: count }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
-    baseR: Math.random() * 1.3 + 0.4,
-    r: Math.random() * 1.3 + 0.4,
+    baseR: Math.random() * 1.4 + 0.4,
+    r: Math.random() * 1.4 + 0.4,
     t: Math.random() * Math.PI * 2,
     speed: 0.015 + Math.random() * 0.03,
     alpha: 0.4,
     tx: null,
     ty: null,
+    angle: Math.random() * Math.PI * 2,
+    radius: Math.random() * W * 0.8,
     isNamePart: false,
     color: "#ffffff",
   }));
@@ -61,23 +65,42 @@ function makeStars() {
 function drawBg() {
   bctx.clearRect(0, 0, W, H);
 
+  // Koinot tumanligi (Galaktika nuri)
+  if (formMode) {
+    const grad = bctx.createRadialGradient(W / 2, H * 0.42, 10, W / 2, H * 0.42, W * 0.65);
+    grad.addColorStop(0, "rgba(255, 143, 184, 0.15)");
+    grad.addColorStop(0.5, "rgba(100, 30, 160, 0.08)");
+    grad.addColorStop(1, "transparent");
+    bctx.fillStyle = grad;
+    bctx.fillRect(0, 0, W, H);
+  }
+
+  // Shockwave to'lqini
+  if (shockwaveActive) {
+    shockwaveRadius += (W * 0.8 - shockwaveRadius) * 0.08;
+    bctx.beginPath();
+    bctx.arc(W / 2, H * 0.42, shockwaveRadius, 0, Math.PI * 2);
+    bctx.strokeStyle = `rgba(255, 217, 138, ${Math.max(0, 1 - shockwaveRadius / (W * 0.8))})`;
+    bctx.lineWidth = 4;
+    bctx.stroke();
+    if (shockwaveRadius >= W * 0.78) shockwaveActive = false;
+  }
+
   for (let i = 0; i < stars.length; i++) {
     const st = stars[i];
     st.t += st.speed;
 
     if (formMode && st.tx != null) {
-      // Yulduzlar ism shaklidagi nuqtalarga tortiladi
-      st.x += (st.tx - st.x) * 0.055;
-      st.y += (st.ty - st.y) * 0.055;
-      st.alpha += (0.95 - st.alpha) * 0.04;
-      st.r += (1.8 - st.r) * 0.04;
-      st.color = "#ffd98a";
+      // Kinematik silliq tortilish + mayin tebranish
+      st.x += (st.tx - st.x) * 0.065;
+      st.y += (st.ty - st.y) * 0.065;
+      st.alpha += (0.95 - st.alpha) * 0.05;
+      st.r = 1.6 + Math.sin(st.t * 2) * 0.6; // Ism harflari oltindek miltillaydi
+      st.color = i % 3 === 0 ? "#ff8fb8" : "#ffd98a";
     } else if (formMode && st.tx == null) {
-      // Ismga kirmagan ortiqcha yulduzlar xiralashadi
-      st.alpha += (0.1 - st.alpha) * 0.03;
+      st.alpha += (0.08 - st.alpha) * 0.04;
       st.color = "#ffffff";
     } else {
-      // Oddiy tungi osmon miltillashi
       st.alpha = 0.3 + Math.sin(st.t) * 0.35;
       st.r = st.baseR;
       st.color = "#ffffff";
@@ -89,7 +112,7 @@ function drawBg() {
     bctx.globalAlpha = Math.max(0, Math.min(1, st.alpha));
 
     if (formMode && st.tx != null) {
-      bctx.shadowBlur = 8;
+      bctx.shadowBlur = 10;
       bctx.shadowColor = "#ffd98a";
     }
 
@@ -98,7 +121,6 @@ function drawBg() {
   }
   bctx.globalAlpha = 1;
 
-  // Har 8-14 soniyada meteor uchishi
   if (Math.random() < 0.003 && !formMode) {
     shootingStar();
   }
@@ -113,7 +135,7 @@ function formName(text) {
   off.height = H;
   const o = off.getContext("2d");
 
-  const fontSize = Math.min(W / (Math.max(4, text.length) * 0.52), H * 0.26);
+  const fontSize = Math.min(W / (Math.max(4, text.length) * 0.5), H * 0.28);
   o.font = `600 ${fontSize}px "Great Vibes", cursive, sans-serif`;
   o.textAlign = "center";
   o.textBaseline = "middle";
@@ -122,12 +144,12 @@ function formName(text) {
 
   const imgData = o.getImageData(0, 0, W, H).data;
   namePoints = [];
-  const step = Math.max(3, Math.round(fontSize / 26));
+  const step = Math.max(2, Math.round(fontSize / 30));
 
   for (let y = 0; y < H; y += step) {
     for (let x = 0; x < W; x += step) {
       const idx = (y * W + x) * 4;
-      if (imgData[idx + 3] > 120) {
+      if (imgData[idx + 3] > 110) {
         namePoints.push({ x, y });
       }
     }
@@ -135,14 +157,15 @@ function formName(text) {
 
   namePoints.sort(() => Math.random() - 0.5);
 
-  const needed = Math.min(namePoints.length, 1200);
+  const needed = Math.min(namePoints.length, 1400);
 
+  // Yulduzlar sonini ko'paytirish
   while (stars.length < needed) {
     stars.push({
       x: Math.random() * W,
       y: Math.random() * H,
-      baseR: 1.2,
-      r: 1.2,
+      baseR: 1.3,
+      r: 1.3,
       t: Math.random() * Math.PI * 2,
       speed: 0.02,
       alpha: 0.2,
@@ -153,6 +176,7 @@ function formName(text) {
     });
   }
 
+  // Har bir yulduz markazdan spiral orqali ismga keladi
   stars.forEach((st, i) => {
     if (i < needed) {
       st.tx = namePoints[i].x;
@@ -166,6 +190,20 @@ function formName(text) {
   });
 
   formMode = true;
+
+  // 1.5 soniyadan so'ng katta shockwave va salyut
+  setTimeout(() => {
+    shockwaveRadius = 10;
+    shockwaveActive = true;
+    firework(W / 2, H * 0.42);
+    confetti(120);
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate([100, 50, 150]); } catch (_) {}
+    }
+
+    $("#name-crown-wrap").classList.remove("hidden");
+  }, 1400);
 }
 
 /* =========================================================
@@ -701,7 +739,7 @@ $("#to-stars").addEventListener("click", () => {
 });
 
 /* =========================================================
-   4. YULDUZLI OSMON VA POLAROID RASMLAR (11 ta)
+   4. YULDUZLI OSMON VA POLAROID RASMLAR (15 ta)
    ========================================================= */
 let seenStarsCount = 0;
 
@@ -772,14 +810,10 @@ $("#form-name").addEventListener("click", async () => {
   document.querySelectorAll(".wish-star").forEach((btn) => btn.classList.add("gone"));
   await sleep(400);
 
+  // Katta kinematik ism yig'ilishi
   formName(content.name);
-  await sleep(1200);
+  await sleep(4500);
 
-  firework(W * 0.25, H * 0.25);
-  await sleep(500);
-  firework(W * 0.75, H * 0.25);
-
-  await sleep(3500);
   $("#to-heartbeat").classList.remove("hidden");
 });
 
@@ -793,11 +827,12 @@ $("#to-heartbeat").addEventListener("click", () => {
     makeStars();
   }, 2000);
 
+  startLoveCounter();
   showScene("heartbeat");
 });
 
 /* =========================================================
-   4.5. QALB URISHI SAHNASI (HAPTIC HEARTBEAT)
+   4.5. QALB URISHI VA 2026-YIL 5-IYUN TANISHUV HISOB-KITOBI
    ========================================================= */
 const pulseHeartEl = $("#pulse-heart");
 const heartProgressEl = $("#heart-progress");
@@ -805,13 +840,46 @@ let heartPressTimer = null;
 let heartHapticInterval = null;
 let heartProgressVal = 0;
 let heartCompleted = false;
+let loveTimer = null;
+
+// 2026-yil 5-iyun tanishuv sanasi
+const FIRST_MET_DATE = new Date("2026-06-05T00:00:00+05:00").getTime();
+
+function startLoveCounter() {
+  if (loveTimer) clearInterval(loveTimer);
+
+  const updateCounter = () => {
+    const now = Date.now();
+    let diff = now - FIRST_MET_DATE;
+    
+    // Agar sana hali kelmagan bo'lsa (yoki testda):
+    if (diff < 0) {
+      diff = Math.abs(diff);
+    }
+
+    const totalSecs = Math.floor(diff / 1000);
+    const days = Math.floor(totalSecs / 86400);
+    const hours = Math.floor((totalSecs % 86400) / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    $("#love-days-num").textContent = days;
+    $("#love-hours-num").textContent = pad(hours);
+    $("#love-mins-num").textContent = pad(mins);
+    $("#love-secs-num").textContent = pad(secs);
+  };
+
+  updateCounter();
+  loveTimer = setInterval(updateCounter, 1000);
+}
 
 function startHeartPress() {
   if (heartCompleted) return;
   pulseHeartEl.classList.add("pressing");
   heartProgressVal = 0;
 
-  // Har 450ms da yurak titrashi
   if (navigator.vibrate) {
     navigator.vibrate([70, 90, 70, 220]);
     heartHapticInterval = setInterval(() => {
@@ -848,8 +916,8 @@ function finishHeartPress() {
     navigator.vibrate([120, 60, 120, 60, 200]);
   }
 
-  confetti(80);
-  firework(W / 2, H * 0.4);
+  confetti(120);
+  firework(W / 2, H * 0.45);
 
   $("#heart-instruction").classList.add("hidden");
   $("#heart-progress-bar").classList.add("hidden");
@@ -861,6 +929,7 @@ pulseHeartEl.addEventListener("pointerup", stopHeartPress);
 pulseHeartEl.addEventListener("pointerleave", stopHeartPress);
 
 $("#to-letter").addEventListener("click", () => {
+  if (loveTimer) clearInterval(loveTimer);
   showScene("letter");
 });
 
@@ -988,7 +1057,6 @@ $("#reply-form").addEventListener("submit", async (e) => {
   submitBtn.textContent = "Uchirilmoqda... ✈️";
   errorMsg.classList.add("hidden");
 
-  // Samolyotcha animatsiyasini yoqish
   const plane = $("#flying-plane");
   plane.classList.remove("hidden");
 

@@ -129,6 +129,17 @@ canvas {
   border-color: rgba(255, 217, 138, 0.9);
 }
 
+.btn.cosmic-btn {
+  animation: cosmicPulse 2s infinite alternate;
+  font-size: 1.05rem;
+  padding: 15px 34px;
+}
+
+@keyframes cosmicPulse {
+  from { transform: scale(1); box-shadow: 0 0 20px rgba(255, 217, 138, 0.5); }
+  to { transform: scale(1.06); box-shadow: 0 0 40px rgba(255, 143, 184, 0.9), 0 0 70px rgba(255, 217, 138, 0.7); }
+}
+
 .btn.ghost {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.25);
@@ -400,7 +411,7 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-end;
   justify-content: center;
   width: 100%;
@@ -408,8 +419,8 @@ canvas {
 
 .candle {
   position: relative;
-  width: 10px;
-  height: 44px;
+  width: 9px;
+  height: 42px;
   border-radius: 4px 4px 2px 2px;
   cursor: pointer;
   background: repeating-linear-gradient(45deg, #ffffff 0 5px, #ff7ba8 5px 10px);
@@ -425,7 +436,7 @@ canvas {
   content: "";
   position: absolute;
   top: -8px;
-  left: 4px;
+  left: 3px;
   width: 2px;
   height: 8px;
   background: #333;
@@ -433,10 +444,10 @@ canvas {
 
 .flame {
   position: absolute;
-  top: -32px;
+  top: -30px;
   left: -4px;
-  width: 18px;
-  height: 28px;
+  width: 16px;
+  height: 26px;
   border-radius: 50% 50% 35% 35%;
   background: radial-gradient(ellipse at 50% 75%, #ffffff 0%, #fff085 25%, #ff9800 65%, rgba(255, 60, 0, 0) 80%);
   box-shadow: 0 0 25px 8px rgba(255, 180, 60, 0.55), 0 0 45px 15px rgba(255, 100, 50, 0.25);
@@ -467,7 +478,7 @@ canvas {
 .smoke-particle {
   position: absolute;
   top: -15px;
-  left: 3px;
+  left: 2px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -515,14 +526,14 @@ canvas {
 
 .wish-star {
   position: absolute;
-  width: 46px;
-  height: 46px;
-  margin: -23px 0 0 -23px;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 28px;
-  line-height: 46px;
+  font-size: 26px;
+  line-height: 44px;
   text-align: center;
   filter: drop-shadow(0 0 12px #ffe9a8) drop-shadow(0 0 25px #ffb300);
   animation: pulseStar 2.2s ease-in-out infinite;
@@ -549,6 +560,35 @@ canvas {
 @keyframes pulseStar {
   0%, 100% { transform: scale(0.9); }
   50% { transform: scale(1.2); }
+}
+
+/* Ism yig'ilganda chiqadigan toj */
+.name-crown-wrap {
+  position: absolute;
+  top: 14%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  animation: dropCard 1s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+.golden-crown {
+  font-size: 3.4rem;
+  filter: drop-shadow(0 0 25px #ffd98a) drop-shadow(0 0 45px rgba(255, 143, 184, 0.8));
+  animation: floatCrown 3s ease-in-out infinite alternate;
+}
+
+@keyframes floatCrown {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-8px) rotate(2deg); }
+}
+
+.crown-sub {
+  font-size: clamp(1.3rem, 5vw, 1.6rem);
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 217, 138, 0.9);
 }
 
 #form-name, #to-heartbeat {
@@ -615,7 +655,7 @@ canvas {
 }
 
 .polaroid-inner p {
-  font-size: clamp(1.25rem, 4.6vw, 1.55rem);
+  font-size: clamp(1.2rem, 4.5vw, 1.45rem);
   color: var(--ink);
   margin-top: 14px;
   line-height: 1.25;
@@ -628,37 +668,102 @@ canvas {
 }
 
 /* =========================================================
-   4.5. QALB URISHI (HAPTIC HEARTBEAT)
+   4.5. QALB URISHI VA TANISHUV KUNI (5-iyun 2026)
    ========================================================= */
 .heartbeat-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  max-width: 360px;
+  gap: 18px;
+  max-width: 380px;
+  width: 100%;
   z-index: 5;
+}
+
+/* Tanishuv kuni qutisi */
+.love-counter-box {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 217, 138, 0.3);
+  backdrop-filter: blur(12px);
+  padding: 14px 16px;
+  border-radius: 18px;
+  width: 100%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  animation: fadeUp 1s ease both;
+}
+
+.love-date-title {
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.love-days-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.time-part {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 143, 184, 0.3);
+  border-radius: 10px;
+  padding: 6px 8px;
+  min-width: 52px;
+}
+
+.time-part span {
+  display: block;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.time-part small {
+  font-size: 0.65rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+  color: #ffb8d2;
+}
+
+.time-sep {
+  font-size: 1.3rem;
+  color: var(--pink);
+  font-weight: bold;
+}
+
+.love-subtext {
+  font-size: 1.15rem;
+  color: #fff0f5;
+  margin-top: 6px;
+  line-height: 1.25;
 }
 
 .pulse-heart {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 115px;
+  height: 115px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: radial-gradient(circle, rgba(255, 100, 150, 0.3), rgba(200, 30, 80, 0.1));
-  border: 2px solid rgba(255, 143, 184, 0.6);
-  box-shadow: 0 0 35px rgba(255, 100, 150, 0.5);
+  background: radial-gradient(circle, rgba(255, 100, 150, 0.35), rgba(200, 30, 80, 0.12));
+  border: 2px solid rgba(255, 143, 184, 0.7);
+  box-shadow: 0 0 35px rgba(255, 100, 150, 0.55);
   animation: breathHeart 1.8s ease-in-out infinite;
   transition: transform 0.2s, box-shadow 0.2s;
   outline: none;
+  margin-top: 6px;
 }
 
 .pulse-heart.pressing {
   transform: scale(1.15);
-  box-shadow: 0 0 60px rgba(255, 50, 100, 0.9), 0 0 100px rgba(255, 217, 138, 0.6);
+  box-shadow: 0 0 65px rgba(255, 50, 100, 0.95), 0 0 110px rgba(255, 217, 138, 0.7);
   border-color: #ffd98a;
   animation: heartThump 0.5s infinite;
 }
@@ -674,7 +779,7 @@ canvas {
 }
 
 .heart-symbol {
-  font-size: 3.8rem;
+  font-size: 3.6rem;
   filter: drop-shadow(0 0 15px rgba(255, 80, 120, 0.8));
 }
 
