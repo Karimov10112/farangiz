@@ -203,6 +203,28 @@ function formName(text) {
     }
 
     $("#name-crown-wrap").classList.remove("hidden");
+
+    // Poetic kunlar hisoblagichini hisoblash va ko'rsatish
+    setTimeout(() => {
+      const BORN = new Date("2007-11-26T00:00:00+05:00").getTime();
+      const MET  = new Date("2026-06-05T00:00:00+05:00").getTime();
+      const NOW  = Date.now();
+
+      const bornDays = Math.floor((NOW - BORN) / 86400000);
+      const metDays  = Math.floor((NOW - MET)  / 86400000);
+
+      const line1El = $("#crown-days-line1");
+      const line2El = $("#crown-days-line2");
+      const poemEl  = $("#crown-days-poem");
+
+      line1El.textContent =
+        `Sen dunyoga kelganingga ${bornDays.toLocaleString()} kun bo'ldi...`;
+      line2El.textContent =
+        `Lekin mening hayotim sen bilan o'tgan shu ${metDays} kundan boshlab haqiqiy hayotga aylandi. ❤️`;
+
+      poemEl.classList.remove("hidden");
+      poemEl.classList.add("poem-reveal");
+    }, 800);
   }, 1400);
 }
 
