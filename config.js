@@ -7,11 +7,11 @@ module.exports = {
   // 1. Uning ismi
   name: "Farangiz",
 
-  // 2. Sayt ochiladigan sana (26-noyabr 00:00:00)
+  // 2. Sayt ochiladigan sana
   unlockAt: "2026-11-26T00:00:00+05:00",
 
-  // 3. Qulflangan rejim (vaqtida ochiladi)
-  testMode: false,
+  // 3. Sinov rejimi (Hozir sinab ko'rishingiz uchun ochiq!):
+  testMode: true,
 
   // 4. Tortdagi shamlar soni: 11 ta (11 ta yulduz va rasmlarga moslab)
   candles: 11,
