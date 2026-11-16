@@ -1092,6 +1092,9 @@ $("#reply-form").addEventListener("submit", async (e) => {
     if (res.ok) {
       await sleep(1500);
       plane.classList.add("hidden");
+      textarea.value = "";
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Yuborish 💌";
       $("#reply-form").classList.add("hidden");
       $("#reply-done").classList.remove("hidden");
       confetti(160);
@@ -1105,6 +1108,15 @@ $("#reply-form").addEventListener("submit", async (e) => {
     errorMsg.classList.remove("hidden");
     submitBtn.disabled = false;
     submitBtn.textContent = "Yuborish 💌";
+  }
+});
+
+// "Yana yozish" tugmasi — reply-done dan formga qaytaradi
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "reply-again-btn") {
+    $("#reply-done").classList.add("hidden");
+    $("#reply-form").classList.remove("hidden");
+    $("#reply-text").focus();
   }
 });
 

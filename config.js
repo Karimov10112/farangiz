@@ -11,7 +11,7 @@ module.exports = {
   unlockAt: "2026-11-26T00:00:00+05:00",
 
   // 3. Sinov rejimi (Hozir sinab ko'rishingiz uchun ochiq!):
-  testMode: true,
+  testMode: false,
 
   // 4. Tortdagi shamlar soni: 11 ta (11 ta yulduz va rasmlarga moslab)
   candles: 11,
