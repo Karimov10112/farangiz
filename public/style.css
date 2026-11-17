@@ -1695,3 +1695,24 @@ input, textarea {
   visibility: hidden;
   flex-shrink: 0;
 }
+
+/* Musiqa yuklanayotganda sovg'a qutisi */
+.gift.loading {
+  cursor: progress;
+}
+
+.gift.loading .gift-box {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+}
+
+.gift.loading .gift-label {
+  letter-spacing: 1px;
+  text-transform: none;
+  animation: loadingPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes loadingPulse {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
+}

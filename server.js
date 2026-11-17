@@ -147,7 +147,7 @@ app.use("/media", (req, res, next) => {
     return res.status(403).send("Hali erta...");
   }
   next();
-}, express.static(CONTENT_DIR));
+}, express.static(CONTENT_DIR, { maxAge: "1d" })); // qayta kirganda musiqa va rasmlar qayta yuklanmaydi
 
 // Javob turlari (admin panel va Telegram uchun belgilar)
 const EVENT_TYPES = {
