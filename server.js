@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json({ limit: "50kb" }));
 
 const CONTENT_DIR = path.join(__dirname, "content");
-const DATA_FILE = path.join(__dirname, "data", "replies.json");
+const store = require("./store");
 
 // config.js har so'rovda qayta o'qiladi — o'zgartirsangiz, server qayta ishga tushirish shart emas
 function loadConfig() {
@@ -158,37 +158,20 @@ const EVENT_TYPES = {
   quiz: "🧠 Test natijasi",
 };
 
-function saveEvent(req, res, type, text) {
-
-  let list = [];
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      list = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    }
-  } catch (_) {
-    list = [];
-  }
-
+async function saveEvent(req, res, type, text) {
   const entry = {
     type,
     text,
     at: new Date().toISOString(),
     ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress || "noma'lum",
   };
-  list.push(entry);
 
-  // 1) Telegramga darhol yuboriladi — server qayta ishga tushsa ham xabar sizda qoladi
+  // 1) Telegramga (sozlangan bo'lsa)
   sendTelegramNotification(text, loadConfig(), type);
-  // 2) Server loglariga ham yoziladi (Render → Logs bo'limida ko'rinadi)
+  // 2) Server loglariga (Render → Logs)
   console.log("💌 YANGI JAVOB [" + type + "]:", JSON.stringify(entry));
-
-  // 3) Faylga saqlanadi (/admin/replies uchun). Yozib bo'lmasa ham, u xato ko'rmasin
-  try {
-    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-    fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2), "utf8");
-  } catch (err) {
-    console.error("Javobni faylga yozishda xatolik:", err);
-  }
+  // 3) Bazaga (DATABASE_URL bo'lsa) yoki faylga. Xato bo'lsa ham, u xato ko'rmasin
+  await store.addEntry(entry);
 
   res.json({ ok: true });
 }
@@ -224,7 +207,7 @@ app.post("/api/event", (req, res) => {
 });
 
 // Javoblarni ko'rish: /admin/replies?key=PAROL
-app.get("/admin/replies", (req, res) => {
+app.get("/admin/replies", async (req, res) => {
   const c = loadConfig();
   const adminKey = getAdminKey(c);
   if (!adminKey || req.query.key !== adminKey) {
@@ -239,14 +222,7 @@ app.get("/admin/replies", (req, res) => {
     `);
   }
 
-  let list = [];
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      list = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    }
-  } catch (_) {
-    list = [];
-  }
+  const list = await store.listEntries();
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -318,6 +294,14 @@ app.get("/admin/replies", (req, res) => {
       color: #aaa;
       margin-bottom: 16px;
     }
+    .store-ok, .store-warn {
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .store-ok { background: rgba(80, 200, 120, 0.12); color: #8fe3a8; }
+    .store-warn { background: rgba(255, 107, 139, 0.12); color: #ff9db3; }
     .card {
       background: #191436;
       border: 1px solid rgba(255, 217, 138, 0.15);
@@ -369,6 +353,9 @@ app.get("/admin/replies", (req, res) => {
       <a href="?key=${esc(req.query.key)}" class="refresh-btn">🔄 Yangilash</a>
     </header>
     <div class="count-info">Jami xabarlar soni: <strong>${list.length}</strong></div>
+    ${store.storageName() === "database"
+      ? `<div class="store-ok">🗄️ Javoblar bazada doimiy saqlanmoqda</div>`
+      : `<div class="store-warn">⚠️ Javoblar vaqtinchalik faylda — server qayta yonganda o'chib ketadi. Render'da DATABASE_URL ni sozlang (README).</div>`}
     ${items}
   </div>
 </body>

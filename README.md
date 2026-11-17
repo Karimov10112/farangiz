@@ -49,6 +49,23 @@ U sayt oxirida sizga javob yozib yuborganida, xabarni quyidagi manzilda o'qiysiz
 
 ---
 
+## 🗄️ Javoblar yo'qolmasligi uchun (Render Postgres — bepul)
+
+Bepul Render serveri uxlab qolib uyg'onganda diskidagi fayllar o'chadi. Javoblar doimiy saqlanishi uchun bepul baza ulang:
+
+1. Render → **New +** → **Postgres**.
+2. **Name:** `farangiz-db`, **Region:** saytingiz bilan bir xil, **Plan:** `Free` → **Create Database**.
+3. Baza **Available** bo'lgach, **Connections** bo'limidan **Internal Database URL** ni nusxalang.
+4. Saytingiz servisiga o'ting → **Environment** → **Add Environment Variable**:
+   - Key: `DATABASE_URL`
+   - Value: nusxalangan manzil
+5. **Save Changes** ni bosing, sayt qayta ishga tushadi.
+
+Admin panelda yashil **"🗄️ Javoblar bazada doimiy saqlanmoqda"** yozuvi chiqsa, hammasi tayyor.
+> Bepul Postgres 30 kun ishlaydi, tug'ilgan kun uchun yetarli.
+
+---
+
 ## 🌟 Sayt bosqichlari (U ko'radigan qism)
 
 1. **Qulflangan ekran (00:00 gacha):**
