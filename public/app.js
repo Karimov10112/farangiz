@@ -596,7 +596,16 @@ async function loadContentAndUnlock() {
   };
   const musicReady = prefetchMusic();
   if (musicReady) {
-    Promise.race([musicReady, sleep(6000)]).then(preloadPhotos);
+    // Sovg'a qutisi musiqa to'liq yuklangach "Bos" bo'ladi — shunda bosilishi bilan musiqa darhol chaladi.
+    // Internet juda sekin bo'lsa, 12 soniyadan keyin baribir ochiladi.
+    const gift = $("#open-btn");
+    gift.classList.add("loading");
+    $(".gift-label").textContent = "Tayyorlanmoqda...";
+    Promise.race([musicReady, sleep(12000)]).then(() => {
+      gift.classList.remove("loading");
+      $(".gift-label").textContent = "Bos";
+      preloadPhotos();
+    });
   } else {
     preloadPhotos();
   }
@@ -613,6 +622,7 @@ async function loadContentAndUnlock() {
    2. SOVG'A QUTISI VA KIRISH
    ========================================================= */
 $("#open-btn").addEventListener("click", async () => {
+  if ($("#open-btn").classList.contains("loading")) return;
   startMusicPlayback();
   $("#open-btn").classList.add("hidden");
 
