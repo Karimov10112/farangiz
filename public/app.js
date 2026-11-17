@@ -1441,7 +1441,7 @@ $("#coupons-fab").addEventListener("click", () => openCoupons("visit"));
    ========================================================= */
 let noTries = 0;
 let finalOpened = false;
-const NO_TEXTS = ["Yo'q", "Ishonching komilmi? 🤨", "Yana o'ylab ko'r 🥺", "Iltimos...", "Baribir ushlay olmaysan 😜", "Ha'ni bos-da 🙈", "Charchadim... 😮‍💨"];
+const NO_TEXTS = ["Yo'q", "Ishonching komilmi? 🤨", "Yana o'ylab ko'r 🥺", "Iltimos...", "Baribir ushlay olmaysan 😜", "Ha'ni bos-da 🙈", "Charchadim... 😮‍💨", "Foydasi yo'q 😏", "Faqat Ha bor 💕"];
 
 async function openFinal() {
   $("#final-title").textContent = content.finalMessage.title || "Bu hali hammasi emas...";
@@ -1472,14 +1472,14 @@ async function openFinal() {
 function fleeNoButton(e) {
   if (e) e.preventDefault();
   const no = $("#ask-no");
+  // Asl o'lchami — yozuvi o'zgarishidan OLDIN o'lchanadi (o'rinbosar uchun)
+  const origW = no.offsetWidth || 100;
+  const origH = no.offsetHeight || 46;
   noTries++;
 
-  if (noTries >= NO_TEXTS.length) {
-    no.classList.add("tired");
-    setTimeout(() => no.classList.add("hidden"), 500);
-  } else {
-    no.textContent = NO_TEXTS[noTries];
-  }
+  // "Yo'q" hech qachon yo'qolmaydi — yozuvlar aylanib takrorlanadi
+  lastNoFlee = Date.now();
+  no.textContent = NO_TEXTS[1 + ((noTries - 1) % (NO_TEXTS.length - 1))];
 
   const yesRect = $("#ask-yes").getBoundingClientRect();
   const bw = no.offsetWidth || 120;
@@ -1502,21 +1502,49 @@ function fleeNoButton(e) {
   );
 
   // Birinchi qochishda tugma sahnaning o'ziga ko'chiriladi — shunda butun ekran bo'ylab qochadi
-  if (!no.classList.contains("fleeing")) $("#final").appendChild(no);
+  if (!no.classList.contains("fleeing")) {
+    // Bo'shagan joyga ko'rinmas o'rinbosar — "Ha" surilib, "Yo'q" turgan joyni egallamasin
+    const ph = document.createElement("span");
+    ph.className = "ask-no-placeholder";
+    ph.style.width = `${origW}px`;
+    ph.style.height = `${origH}px`;
+    no.after(ph);
+    $("#final").appendChild(no);
+  }
   no.classList.add("fleeing");
   no.style.left = `${x}px`;
   no.style.top = `${y}px`;
 
-  const scale = Math.min(1.8, 1 + noTries * 0.14);
+  const scale = Math.min(1.35, 1 + noTries * 0.07);
   $("#ask-yes").style.transform = `scale(${scale})`;
   buzz(30);
 }
 
-$("#ask-no").addEventListener("pointerenter", fleeNoButton);
-$("#ask-no").addEventListener("pointerdown", fleeNoButton);
-$("#ask-no").addEventListener("click", fleeNoButton);
+let lastNoFlee = 0;
+let yesPressedDirectly = false;
 
-$("#ask-yes").addEventListener("click", async () => {
+// Telefonda: barmoq tegishi bilan qochadi, preventDefault esa keyingi "click"ni butunlay bekor qiladi —
+// shunda barmoq ostiga kelib qolgan "Ha" tugmasi tasodifan bosilmaydi
+$("#ask-no").addEventListener("touchstart", fleeNoButton, { passive: false });
+$("#ask-no").addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") fleeNoButton(e); });
+$("#ask-no").addEventListener("pointerdown", (e) => { if (e.pointerType !== "touch") fleeNoButton(e); });
+$("#ask-no").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
+
+// "Ha" faqat barmoq to'g'ridan-to'g'ri unga qo'yilganda ishlaydi
+$("#ask-yes").addEventListener("pointerdown", () => {
+  yesPressedDirectly = Date.now() - lastNoFlee > 400;
+});
+$("#ask-yes").addEventListener("touchstart", () => {
+  yesPressedDirectly = Date.now() - lastNoFlee > 400;
+}, { passive: true });
+
+$("#ask-yes").addEventListener("click", async (e) => {
+  if (!yesPressedDirectly || Date.now() - lastNoFlee < 400) {
+    e.preventDefault();
+    yesPressedDirectly = false;
+    return;
+  }
+  yesPressedDirectly = false;
   $("#ask-box").classList.add("hidden");
   $("#ask-no").classList.add("hidden");
   $("#ask-done").classList.remove("hidden");

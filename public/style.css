@@ -1684,3 +1684,14 @@ input, textarea {
 #lanterns .wish-box .btn {
   background: linear-gradient(135deg, rgba(120, 40, 90, 0.92), rgba(110, 80, 40, 0.92));
 }
+
+/* "Ha" kattalashganda ham bir qatorda tursin */
+.ask-yes {
+  white-space: nowrap;
+}
+
+.ask-no-placeholder {
+  display: inline-block;
+  visibility: hidden;
+  flex-shrink: 0;
+}
