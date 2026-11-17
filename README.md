@@ -30,6 +30,8 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 | `letter` | Konvert ichidagi xat: murojaat (`greeting`), abzaslar (`paragraphs`) va imzo (`signature`) |
 | `finalMessage` | Oxirgi sahifadagi katta sarlavha va matn |
 | `music` | Fon musiqasi fayli nomi (`content/music` papkasiga tashlanadi). Kerak bo'lmasa `null` |
+| `puzzle` | Rasm boshqotirmasi: `photo` — `content/photos` dagi rasm nomi, `message` — yig'ilganda chiqadigan xabar. O'chirish: `puzzle: null` |
+| `meetAt` | Uchrashuv vaqti — finalda "Ko'rishishimizga qoldi" deb jonli sanaladi. O'chirish: `meetAt: null` |
 | `quiz.questions` | "Meni qanchalik bilasan?" testi savollari. `answer` — to'g'ri variant raqami (0 dan boshlanadi). O'chirish: `questions: []` |
 | `coupons` | Qirib ochiladigan sevgi kuponlari. U kuponni "ishlatsa", sizga xabar keladi. O'chirish: `coupons: []` |
 | `finalQuestion` | Finaldagi savol ("Kechqurun kelasanmi?"). "Yo'q" tugmasi qochib ketadi. O'chirish: `finalQuestion: null` |
@@ -46,6 +48,15 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 U sayt oxirida sizga javob yozib yuborganida, xabarni quyidagi manzilda o'qiysiz:
 👉 `http://localhost:3000/admin/replies?key=PAROL`
 *(PAROL o'rniga `config.js` dagi `adminKey` qiymati kiritiladi).*
+
+---
+
+## 📍 U qaysi bosqichda ekanini kuzatish
+
+Admin panelning **"📍 Faollik"** bo'limida u saytni ochgani va har bir bosqichga o'tgani vaqti bilan ko'rinadi. Masalan: "🔒 Qulflangan sahifani ochdi — 00:00 ni kutyapti", "🎂 Sovg'ani ochdi", "💌 Xatni ochyapti". Har bir yozuv yonida nechanchi kirishi va saytda necha daqiqa bo'lgani turadi.
+
+- Admin panelni ochgan qurilma (ya'ni **sizniki**) kuzatilmaydi, shuning uchun sinovlaringiz uning faolligi bilan aralashmaydi.
+- Sinovlardan keyin admin panel pastidagi **"🗑 Hammasini tozalash"** tugmasi bilan barcha yozuvlarni o'chiring.
 
 ---
 

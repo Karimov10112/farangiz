@@ -138,6 +138,10 @@ app.get("/api/content", (req, res) => {
       .filter((k) => k && k.title)
       .map((k, i) => ({ id: "c" + i, emoji: k.emoji || "🎟", title: String(k.title), text: String(k.text || "") })),
     finalQuestion: c.finalQuestion && c.finalQuestion.question ? c.finalQuestion : null,
+    puzzle: c.puzzle && c.puzzle.photo
+      ? { photo: "/media/photos/" + encodeURIComponent(c.puzzle.photo), message: String(c.puzzle.message || "") }
+      : null,
+    meetAt: c.meetAt && !isNaN(new Date(c.meetAt).getTime()) ? c.meetAt : null,
   });
 });
 
@@ -156,6 +160,7 @@ const EVENT_TYPES = {
   answer: "❤️ Kelasanmi? savoliga javob",
   coupon: "🎟 Kupon ishlatdi",
   quiz: "🧠 Test natijasi",
+  progress: "📍 Faollik",
 };
 
 async function saveEvent(req, res, type, text) {
@@ -192,10 +197,11 @@ app.post("/api/reply", (req, res) => {
 // Boshqa harakatlari: tilak, "Ha" javobi, kupon, test natijasi
 app.post("/api/event", (req, res) => {
   const c = loadConfig();
-  if (!isUnlocked(c)) {
+  const type = String((req.body && req.body.type) || "");
+  // Faollik (qaysi bosqichda ekani) qulf paytida ham yuboriladi — u 00:00 ni kutayotganini ko'rasiz
+  if (!isUnlocked(c) && type !== "progress") {
     return res.status(403).json({ error: "forbidden" });
   }
-  const type = String((req.body && req.body.type) || "");
   if (!EVENT_TYPES[type] || type === "reply") {
     return res.status(400).json({ error: "bad_type" });
   }
@@ -228,13 +234,21 @@ app.get("/admin/replies", async (req, res) => {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[ch]));
 
-  const reversed = [...list].reverse();
+  const fmtTime = (at) => new Date(at).toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" });
+  const progress = list.filter((r) => r.type === "progress").reverse();
+  const reversed = list.filter((r) => r.type !== "progress").reverse();
+  const progressHtml = progress.length
+    ? `<details class="progress" ${progress.length ? "open" : ""}>
+        <summary>📍 Faollik — u qaysi bosqichda (${progress.length})</summary>
+        <ul>${progress.slice(0, 60).map((r) => `<li><span class="ptime">${fmtTime(r.at)}</span> ${esc(r.text)}</li>`).join("")}</ul>
+      </details>`
+    : "";
   const items = reversed.length
     ? reversed.map((r, i) => `
       <div class="card">
         <div class="card-header">
           <span class="badge">#${reversed.length - i} · ${esc(EVENT_TYPES[r.type || "reply"] || "💌 Javob")}</span>
-          <span class="time">${new Date(r.at).toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}</span>
+          <span class="time">${fmtTime(r.at)}</span>
         </div>
         <div class="text">${esc(r.text)}</div>
       </div>
@@ -302,6 +316,21 @@ app.get("/admin/replies", async (req, res) => {
     }
     .store-ok { background: rgba(80, 200, 120, 0.12); color: #8fe3a8; }
     .store-warn { background: rgba(255, 107, 139, 0.12); color: #ff9db3; }
+    .progress {
+      background: #140f2d;
+      border: 1px solid rgba(142, 197, 255, 0.2);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+    }
+    .progress summary { cursor: pointer; color: #8ec5ff; font-weight: 600; }
+    .progress ul { list-style: none; margin-top: 10px; max-height: 260px; overflow-y: auto; }
+    .progress li { font-size: 0.9rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .progress .ptime { color: #ff8fb8; font-size: 0.78rem; margin-right: 6px; }
+    .clear-btn {
+      margin-top: 30px; width: 100%; padding: 12px; border-radius: 12px; cursor: pointer;
+      background: transparent; color: #ff8fb8; border: 1px dashed rgba(255, 143, 184, 0.5); font-size: 0.9rem;
+    }
     .card {
       background: #191436;
       border: 1px solid rgba(255, 217, 138, 0.15);
@@ -352,14 +381,35 @@ app.get("/admin/replies", async (req, res) => {
       <h1>💌 Javoblar</h1>
       <a href="?key=${esc(req.query.key)}" class="refresh-btn">🔄 Yangilash</a>
     </header>
-    <div class="count-info">Jami xabarlar soni: <strong>${list.length}</strong></div>
+    <div class="count-info">Jami xabarlar soni: <strong>${reversed.length}</strong></div>
     ${store.storageName() === "database"
       ? `<div class="store-ok">🗄️ Javoblar bazada doimiy saqlanmoqda</div>`
       : `<div class="store-warn">⚠️ Javoblar vaqtinchalik faylda — server qayta yonganda o'chib ketadi. Render'da DATABASE_URL ni sozlang (README).</div>`}
+    ${progressHtml}
     ${items}
+    <form method="post" action="/admin/clear?key=${encodeURIComponent(req.query.key)}"
+          onsubmit="return confirm('Barcha javoblar va faollik butunlay o‘chiriladi. Rostdan ham?')">
+      <button class="clear-btn" type="submit">🗑 Hammasini tozalash (sinovlardan keyin)</button>
+    </form>
   </div>
+  <script>
+    // Bu qurilma — sizniki: saytdagi faollik kuzatuvi bu qurilmadan yuborilmaydi
+    try { localStorage.setItem("farangiz-owner", "1"); } catch (_) {}
+  </script>
 </body>
 </html>`);
+});
+
+// Barcha javoblarni o'chirish (sinovlardan keyin tozalash uchun)
+app.post("/admin/clear", async (req, res) => {
+  const adminKey = getAdminKey(loadConfig());
+  if (!adminKey || req.query.key !== adminKey) return res.status(401).send("Parol noto'g'ri");
+  try {
+    await store.clearAll();
+  } catch (err) {
+    console.error("Tozalashda xatolik:", err.message);
+  }
+  res.redirect("/admin/replies?key=" + encodeURIComponent(req.query.key));
 });
 
 // Statik frontend fayllar

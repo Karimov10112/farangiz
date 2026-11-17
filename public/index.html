@@ -144,6 +144,25 @@
     </div>
   </section>
 
+  <!-- 4.7. Rasm boshqotirmasi (xatni ochish uchun) -->
+  <section id="puzzle" class="scene">
+    <div class="puzzle-wrap">
+      <p class="small-caps">Xat qulflangan 🔒</p>
+      <h2 class="script puzzle-heading">Rasmni yig'</h2>
+      <p id="puzzle-hint" class="sub">Bo'lakni surib boshqasining ustiga tashla yoki ikkitasini ketma-ket bos ✨</p>
+      <div class="puzzle-board-wrap">
+        <div id="puzzle-board" class="puzzle-board"></div>
+        <img id="puzzle-peek-img" class="puzzle-peek-img" alt="" />
+      </div>
+      <p id="puzzle-count" class="puzzle-count"></p>
+      <button id="puzzle-peek" class="btn ghost puzzle-peek-btn">👀 Rasmga qarab olish</button>
+      <div id="puzzle-done" class="puzzle-done hidden">
+        <p id="puzzle-message" class="handwritten puzzle-message"></p>
+        <button id="puzzle-next" class="btn glow">Xatni ochish 💌</button>
+      </div>
+    </div>
+  </section>
+
   <!-- 5. Konvert va xat -->
   <section id="letter" class="scene">
     <div id="envelope-wrap" class="envelope-wrap">
@@ -220,6 +239,10 @@
     <div class="final-container">
       <h2 id="final-title" class="script big-gold"></h2>
       <p id="final-text" class="final-sub"></p>
+      <div id="meet-countdown" class="meet-countdown hidden">
+        <span id="meet-label" class="meet-label"></span>
+        <span id="meet-time" class="meet-time"></span>
+      </div>
       <div id="ask-box" class="ask-box">
         <p id="ask-question" class="ask-question"></p>
         <div id="ask-buttons" class="ask-buttons">
