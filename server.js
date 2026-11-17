@@ -55,13 +55,13 @@ function getAdminKey(cfg) {
   return String(process.env.ADMIN_KEY || cfg.adminKey || "").trim();
 }
 
-function sendTelegramNotification(text, cfg) {
+function sendTelegramNotification(text, cfg, type = "reply") {
   const tg = getTelegramSettings(cfg);
   if (!tg) return;
   const token = tg.token;
   const chatId = tg.chatId;
   // parse_mode ishlatilmaydi: matnda * yoki _ bo'lsa, Telegram xabarni rad etardi
-  const msg = `💌 Yangi javob keldi!\n\n"${text}"\n\n🕒 ${new Date().toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}`;
+  const msg = `${EVENT_TYPES[type] || "💌 Javob"}\n\n"${text}"\n\n🕒 ${new Date().toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}`;
 
   const payload = JSON.stringify({
     chat_id: chatId,
@@ -126,6 +126,18 @@ app.get("/api/content", (req, res) => {
     finalMessage: c.finalMessage || { title: "Tabriklayman!", text: "❤️" },
     music: hasMusic ? "/media/music/" + encodeURIComponent(c.music) : null,
     allowReply: c.allowReply !== false,
+    quiz: ((c.quiz && c.quiz.questions) || [])
+      .filter((q) => q && q.q && Array.isArray(q.options) && q.options.length >= 2)
+      .map((q) => ({
+        q: String(q.q),
+        options: q.options.map(String),
+        answer: Math.max(0, Math.min(q.options.length - 1, Number(q.answer) || 0)),
+        right: q.right ? String(q.right) : "",
+      })),
+    coupons: (c.coupons || [])
+      .filter((k) => k && k.title)
+      .map((k, i) => ({ id: "c" + i, emoji: k.emoji || "🎟", title: String(k.title), text: String(k.text || "") })),
+    finalQuestion: c.finalQuestion && c.finalQuestion.question ? c.finalQuestion : null,
   });
 });
 
@@ -137,16 +149,16 @@ app.use("/media", (req, res, next) => {
   next();
 }, express.static(CONTENT_DIR));
 
-// Uning javobi
-app.post("/api/reply", (req, res) => {
-  const c = loadConfig();
-  if (!c.allowReply || !isUnlocked(c)) {
-    return res.status(403).json({ error: "forbidden" });
-  }
-  const text = String((req.body && req.body.text) || "").trim().slice(0, 2000);
-  if (!text) {
-    return res.status(400).json({ error: "empty" });
-  }
+// Javob turlari (admin panel va Telegram uchun belgilar)
+const EVENT_TYPES = {
+  reply: "💌 Javob",
+  wish: "🏮 Tilagi",
+  answer: "❤️ Kelasanmi? savoliga javob",
+  coupon: "🎟 Kupon ishlatdi",
+  quiz: "🧠 Test natijasi",
+};
+
+function saveEvent(req, res, type, text) {
 
   let list = [];
   try {
@@ -158,6 +170,7 @@ app.post("/api/reply", (req, res) => {
   }
 
   const entry = {
+    type,
     text,
     at: new Date().toISOString(),
     ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress || "noma'lum",
@@ -165,9 +178,9 @@ app.post("/api/reply", (req, res) => {
   list.push(entry);
 
   // 1) Telegramga darhol yuboriladi — server qayta ishga tushsa ham xabar sizda qoladi
-  sendTelegramNotification(text, c);
+  sendTelegramNotification(text, loadConfig(), type);
   // 2) Server loglariga ham yoziladi (Render → Logs bo'limida ko'rinadi)
-  console.log("💌 YANGI JAVOB:", JSON.stringify(entry));
+  console.log("💌 YANGI JAVOB [" + type + "]:", JSON.stringify(entry));
 
   // 3) Faylga saqlanadi (/admin/replies uchun). Yozib bo'lmasa ham, u xato ko'rmasin
   try {
@@ -178,6 +191,36 @@ app.post("/api/reply", (req, res) => {
   }
 
   res.json({ ok: true });
+}
+
+// Uning javobi
+app.post("/api/reply", (req, res) => {
+  const c = loadConfig();
+  if (!c.allowReply || !isUnlocked(c)) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  const text = String((req.body && req.body.text) || "").trim().slice(0, 2000);
+  if (!text) {
+    return res.status(400).json({ error: "empty" });
+  }
+  saveEvent(req, res, "reply", text);
+});
+
+// Boshqa harakatlari: tilak, "Ha" javobi, kupon, test natijasi
+app.post("/api/event", (req, res) => {
+  const c = loadConfig();
+  if (!isUnlocked(c)) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  const type = String((req.body && req.body.type) || "");
+  if (!EVENT_TYPES[type] || type === "reply") {
+    return res.status(400).json({ error: "bad_type" });
+  }
+  const text = String((req.body && req.body.text) || "").trim().slice(0, 500);
+  if (!text) {
+    return res.status(400).json({ error: "empty" });
+  }
+  saveEvent(req, res, type, text);
 });
 
 // Javoblarni ko'rish: /admin/replies?key=PAROL
@@ -214,7 +257,7 @@ app.get("/admin/replies", (req, res) => {
     ? reversed.map((r, i) => `
       <div class="card">
         <div class="card-header">
-          <span class="badge">#${reversed.length - i}</span>
+          <span class="badge">#${reversed.length - i} · ${esc(EVENT_TYPES[r.type || "reply"] || "💌 Javob")}</span>
           <span class="time">${new Date(r.at).toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}</span>
         </div>
         <div class="text">${esc(r.text)}</div>

@@ -166,14 +166,90 @@
     <button id="to-final" class="btn ghost hidden">Davom etish →</button>
   </section>
 
-  <!-- 6. Final -->
+  <!-- 5.5. "Meni qanchalik bilasan?" testi -->
+  <section id="quiz" class="scene">
+    <div class="quiz-wrap">
+      <p class="small-caps">Kichkina sinov</p>
+      <h2 class="script quiz-heading">Meni qanchalik bilasan?</h2>
+      <div id="quiz-hearts" class="quiz-hearts"></div>
+      <div id="quiz-card" class="quiz-card">
+        <p id="quiz-progress" class="quiz-progress"></p>
+        <p id="quiz-question" class="quiz-question"></p>
+        <div id="quiz-options" class="quiz-options"></div>
+        <p id="quiz-feedback" class="quiz-feedback handwritten"></p>
+      </div>
+      <div id="quiz-result" class="quiz-result hidden">
+        <p id="quiz-score" class="quiz-score script"></p>
+        <p id="quiz-verdict" class="handwritten quiz-verdict"></p>
+        <button id="quiz-next" class="btn glow">Senga sovg'alarim bor 🎁</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.7. Sevgi kuponlari (qirib ochiladigan) -->
+  <section id="coupons" class="scene">
+    <div class="coupons-wrap">
+      <p class="small-caps">Faqat sen uchun</p>
+      <h2 class="script coupons-heading">Sevgi kuponlari</h2>
+      <p class="sub coupons-hint">Barmog'ing bilan qirib och ✨ Istagan paytingda ishlatasan — men esa so'zimda turaman</p>
+      <div id="coupon-grid" class="coupon-grid"></div>
+      <button id="coupons-next" class="btn glow hidden">Davom etish →</button>
+      <button id="coupons-back" class="btn ghost hidden">← Orqaga</button>
+    </div>
+  </section>
+
+  <!-- Kuponni ishlatish modali -->
+  <div id="coupon-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="secret-card coupon-confirm">
+      <div id="coupon-modal-emoji" class="secret-emoji"></div>
+      <h3 id="coupon-modal-title" class="secret-title"></h3>
+      <p class="secret-desc handwritten">Ishlatsang, Duduga darhol xabar boradi va u so'zini bajaradi 😌</p>
+      <div class="coupon-modal-actions">
+        <button id="coupon-use" class="btn glow">Ishlataman ✨</button>
+        <button id="coupon-cancel" class="btn ghost">Keyinroq</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyingi kirishlarda kuponlarga tez kirish tugmasi -->
+  <button id="coupons-fab" class="coupons-fab hidden" aria-label="Kuponlarim">🎟</button>
+
+  <!-- 6. Final: "Kelasanmi?" -->
   <section id="final" class="scene">
     <div class="final-container">
       <h2 id="final-title" class="script big-gold"></h2>
       <p id="final-text" class="final-sub"></p>
-      
+      <div id="ask-box" class="ask-box">
+        <p id="ask-question" class="ask-question"></p>
+        <div id="ask-buttons" class="ask-buttons">
+          <button id="ask-yes" class="btn glow ask-yes">Ha ❤️</button>
+          <button id="ask-no" class="btn ghost ask-no">Yo'q</button>
+        </div>
+      </div>
+      <div id="ask-done" class="ask-done hidden">
+        <p class="handwritten ask-done-text">Bilardim! ❤️ Seni kutaman...</p>
+        <button id="to-lanterns" class="btn glow">Oxirgi sehr ✨</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Osmonga fonar uchirish + javob -->
+  <section id="lanterns" class="scene">
+    <div id="lantern-sky" class="lantern-sky"></div>
+    <div class="final-container lantern-container">
+      <div id="wish-box" class="wish-box">
+        <p class="small-caps">Oxirgi sehr</p>
+        <h2 class="script lantern-heading">Tilagingni osmonga yubor</h2>
+        <textarea id="wish-text" maxlength="300" placeholder="Eng katta orzuingni yoz..."></textarea>
+        <button id="wish-btn" class="btn glow">Fonarni uchirish 🏮</button>
+      </div>
+      <div id="wish-sent" class="wish-sent hidden">
+        <p class="handwritten wish-sent-text">Tilaging osmonga ko'tarildi... u albatta ushaladi ✨</p>
+      </div>
+
       <!-- Sirli tugma (Easter egg) -->
-      <button id="secret-btn" class="secret-btn">🙈 Faqat bu tugmaga bosma!</button>
+      <button id="secret-btn" class="secret-btn hidden">🙈 Faqat bu tugmaga bosma!</button>
 
       <form id="reply-form" class="reply-box hidden">
         <label for="reply-text" class="reply-label">Menga bir nima desang...</label>
@@ -184,7 +260,7 @@
 
       <!-- Osmonga uchib ketadigan qog'oz samolyotcha -->
       <div id="flying-plane" class="flying-plane hidden">✈️💌</div>
-      
+
       <div id="reply-done" class="reply-success hidden">
         <span class="heart-icon">💖</span>
         <h3>Yetib keldi ❤️</h3>

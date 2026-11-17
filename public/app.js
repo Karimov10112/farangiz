@@ -30,6 +30,8 @@ let formMode = false;
 let namePoints = [];
 let shockwaveRadius = 0;
 let shockwaveActive = false;
+// Ism yulduzlardan yig'iladigan balandlik (toj va matn qutisi ostida turishi uchun)
+const NAME_Y = 0.6;
 
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -67,7 +69,7 @@ function drawBg() {
 
   // Koinot tumanligi (Galaktika nuri)
   if (formMode) {
-    const grad = bctx.createRadialGradient(W / 2, H * 0.42, 10, W / 2, H * 0.42, W * 0.65);
+    const grad = bctx.createRadialGradient(W / 2, H * NAME_Y, 10, W / 2, H * NAME_Y, W * 0.65);
     grad.addColorStop(0, "rgba(255, 143, 184, 0.15)");
     grad.addColorStop(0.5, "rgba(100, 30, 160, 0.08)");
     grad.addColorStop(1, "transparent");
@@ -79,7 +81,7 @@ function drawBg() {
   if (shockwaveActive) {
     shockwaveRadius += (W * 0.8 - shockwaveRadius) * 0.08;
     bctx.beginPath();
-    bctx.arc(W / 2, H * 0.42, shockwaveRadius, 0, Math.PI * 2);
+    bctx.arc(W / 2, H * NAME_Y, shockwaveRadius, 0, Math.PI * 2);
     bctx.strokeStyle = `rgba(255, 217, 138, ${Math.max(0, 1 - shockwaveRadius / (W * 0.8))})`;
     bctx.lineWidth = 4;
     bctx.stroke();
@@ -140,7 +142,7 @@ function formName(text) {
   o.textAlign = "center";
   o.textBaseline = "middle";
   o.fillStyle = "#ffffff";
-  o.fillText(text, W / 2, H * 0.42);
+  o.fillText(text, W / 2, H * NAME_Y);
 
   const imgData = o.getImageData(0, 0, W, H).data;
   namePoints = [];
@@ -195,7 +197,7 @@ function formName(text) {
   setTimeout(() => {
     shockwaveRadius = 10;
     shockwaveActive = true;
-    firework(W / 2, H * 0.42);
+    firework(W / 2, H * NAME_Y);
     confetti(120);
 
     if (navigator.vibrate) {
@@ -352,7 +354,7 @@ function triggerFxLoop() {
         fctx.globalAlpha = p.life / p.maxLife;
         fctx.fillStyle = p.color;
         fctx.beginPath();
-        fctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+        fctx.arc(p.x, p.y, Math.max(0, p.size * (p.life / p.maxLife)), 0, Math.PI * 2);
         fctx.fill();
       } else if (p.kind === "touchHeart") {
         p.x += p.vx;
@@ -597,6 +599,11 @@ async function loadContentAndUnlock() {
     Promise.race([musicReady, sleep(6000)]).then(preloadPhotos);
   } else {
     preloadPhotos();
+  }
+
+  // Kuponlarni oldin ko'rgan bo'lsa — keyingi kirishlarda 🎟 tugmasi chiqadi
+  if (couponState.seen && content.coupons && content.coupons.length) {
+    $("#coupons-fab").classList.remove("hidden");
   }
 
   showScene("intro");
@@ -1016,7 +1023,11 @@ async function typeOutLetter() {
   textContainer.appendChild(cursor);
 
   $("#paper").addEventListener("click", () => {
+    if (isTypingFastForward) return;
     isTypingFastForward = true;
+    // Xat to'liq chiqqach, u o'qiyotgan joyidan davom etadi (oxiriga sakrab ketmaydi)
+    const keep = $("#paper").scrollTop;
+    requestAnimationFrame(() => { $("#paper").scrollTop = keep; });
   });
 
   const lines = [letterData.greeting, "", ...letterData.paragraphs.flatMap((p) => [p, ""])];
@@ -1058,26 +1069,541 @@ async function typeOutLetter() {
   }
 
   cursor.remove();
-  $("#paper").scrollTop = $("#paper").scrollHeight;
+  if (!isTypingFastForward) $("#paper").scrollTop = $("#paper").scrollHeight;
   isLetterDone = true;
 }
 
-$("#to-final").addEventListener("click", async () => {
-  $("#final-title").textContent = content.finalMessage.title || "Bu hali hammasi emas...";
-  $("#final-text").textContent = content.finalMessage.text || "Kechqurun ko'rishamiz ❤️";
+/* =========================================================
+   UMUMIY: SERVERGA HARAKATNI YUBORISH VA TEBRANISH
+   ========================================================= */
+function sendEvent(type, text) {
+  return fetch("/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, text }),
+  })
+    .then((r) => r.ok)
+    .catch(() => false);
+}
 
-  if (content.allowReply) {
-    $("#reply-form").classList.remove("hidden");
+function buzz(pattern) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch (_) {}
   }
+}
 
-  showScene("final");
+const hasQuiz = () => content.quiz && content.quiz.length > 0;
+const hasCoupons = () => content.coupons && content.coupons.length > 0;
 
-  await sleep(1600);
-  fireworkShow(4);
+// Xatdan keyin: test → kuponlar → final (qaysi biri yoqilgan bo'lsa)
+$("#to-final").addEventListener("click", () => {
+  if (hasQuiz()) return startQuiz();
+  if (hasCoupons()) return openCoupons("flow");
+  openFinal();
 });
 
 /* =========================================================
-   6. FINAL VA SIRLI TUGMA (EASTER EGG)
+   5.5. "MENI QANCHALIK BILASAN?" TESTI
+   ========================================================= */
+let quizIdx = 0;
+let quizScore = 0;
+let quizFirstTry = true;
+let quizLocked = false;
+
+const QUIZ_WRONG = [
+  "Hmm... yana o'ylab ko'r 😏",
+  "Yo'q-yo'q, sen buni bilasan 🙈",
+  "Ayyy, xafa bo'ldim-a 🥺 Yana bir marta?",
+  "Sovuq... juda sovuq 🥶",
+];
+
+function startQuiz() {
+  quizIdx = 0;
+  quizScore = 0;
+  $("#quiz-result").classList.add("hidden");
+  $("#quiz-card").classList.remove("hidden");
+
+  const hearts = $("#quiz-hearts");
+  hearts.innerHTML = "";
+  content.quiz.forEach(() => {
+    const h = document.createElement("span");
+    h.className = "quiz-heart";
+    h.textContent = "🤍";
+    hearts.appendChild(h);
+  });
+
+  showScene("quiz");
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const q = content.quiz[quizIdx];
+  quizFirstTry = true;
+  quizLocked = false;
+
+  $("#quiz-progress").textContent = `${quizIdx + 1} / ${content.quiz.length}`;
+  $("#quiz-question").textContent = q.q;
+  $("#quiz-feedback").textContent = "";
+
+  const card = $("#quiz-card");
+  card.classList.remove("quiz-in");
+  void card.offsetWidth; // animatsiyani qayta boshlash
+  card.classList.add("quiz-in");
+
+  const box = $("#quiz-options");
+  box.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const b = document.createElement("button");
+    b.className = "quiz-option";
+    b.textContent = opt;
+    b.addEventListener("click", () => answerQuiz(i, b));
+    box.appendChild(b);
+  });
+}
+
+async function answerQuiz(i, btn) {
+  if (quizLocked || btn.disabled) return;
+  const q = content.quiz[quizIdx];
+
+  if (i === q.answer) {
+    quizLocked = true;
+    btn.classList.add("right");
+    if (quizFirstTry) {
+      quizScore++;
+      const heart = $("#quiz-hearts").children[quizIdx];
+      if (heart) {
+        heart.textContent = "❤️";
+        heart.classList.add("pop");
+      }
+    }
+    $("#quiz-feedback").textContent = q.right || "To'g'ri! ❤️";
+    const r = btn.getBoundingClientRect();
+    firework(r.left + r.width / 2, r.top);
+    buzz([40, 30, 40]);
+
+    await sleep(1900);
+    quizIdx++;
+    if (quizIdx < content.quiz.length) renderQuizQuestion();
+    else finishQuiz();
+  } else {
+    quizFirstTry = false;
+    btn.classList.add("wrong");
+    btn.disabled = true;
+    $("#quiz-feedback").textContent = QUIZ_WRONG[(Math.random() * QUIZ_WRONG.length) | 0];
+    buzz(120);
+  }
+}
+
+function finishQuiz() {
+  const total = content.quiz.length;
+  const ratio = quizScore / total;
+
+  $("#quiz-card").classList.add("hidden");
+  $("#quiz-score").textContent = `${quizScore} / ${total}`;
+  $("#quiz-verdict").textContent =
+    ratio === 1
+      ? "Sen meni mendan ham yaxshi bilasan... ❤️"
+      : ratio >= 0.6
+        ? "Deyarli mukammal! Qolganini kechqurun o'rgataman 😉"
+        : "Hechqisi yo'q — meni bilib olishga hali butun umrimiz bor 🥰";
+  $("#quiz-next").textContent = hasCoupons() ? "Senga sovg'alarim bor 🎁" : "Davom etish →";
+  $("#quiz-result").classList.remove("hidden");
+
+  confetti(ratio === 1 ? 220 : 120);
+  if (ratio === 1) fireworkShow(2);
+  sendEvent("quiz", `${quizScore} / ${total} (birinchi urinishda to'g'ri topganlari)`);
+}
+
+$("#quiz-next").addEventListener("click", () => {
+  if (hasCoupons()) openCoupons("flow");
+  else openFinal();
+});
+
+/* =========================================================
+   5.7. SEVGI KUPONLARI (QIRIB OCHILADIGAN)
+   ========================================================= */
+const COUPON_KEY = "farangiz-coupons-v1";
+let couponState = loadCouponState();
+let couponMode = "flow";
+let couponReturnScene = null;
+let pendingCoupon = null;
+
+function loadCouponState() {
+  const empty = { scratched: {}, used: {}, seen: false };
+  try {
+    return Object.assign(empty, JSON.parse(localStorage.getItem(COUPON_KEY)) || {});
+  } catch (_) {
+    return empty;
+  }
+}
+
+function saveCouponState() {
+  try { localStorage.setItem(COUPON_KEY, JSON.stringify(couponState)); } catch (_) {}
+}
+
+// "flow" — sayt oqimida (oxirida "Davom etish"), "visit" — 🎟 tugmasi orqali keyinroq kirganda
+function openCoupons(mode) {
+  couponMode = mode;
+  couponReturnScene = mode === "visit" ? currentScene : null;
+  couponState.seen = true;
+  saveCouponState();
+
+  $("#coupons-fab").classList.add("hidden");
+  showScene("coupons");
+  buildCouponGrid();
+  updateCouponButtons();
+}
+
+function updateCouponButtons() {
+  const allOpen = content.coupons.every((k) => couponState.scratched[k.id]);
+  $("#coupons-next").classList.toggle("hidden", couponMode !== "flow" || !allOpen);
+  $("#coupons-back").classList.toggle("hidden", couponMode === "flow");
+}
+
+function buildCouponGrid() {
+  const grid = $("#coupon-grid");
+  grid.innerHTML = "";
+
+  content.coupons.forEach((k, idx) => {
+    const card = document.createElement("div");
+    card.className = "coupon";
+    card.style.animationDelay = `${idx * 0.08}s`;
+    if (couponState.used[k.id]) card.classList.add("used");
+
+    const body = document.createElement("div");
+    body.className = "coupon-body";
+    body.innerHTML = `
+      <span class="coupon-emoji"></span>
+      <p class="coupon-title"></p>
+      <p class="coupon-text handwritten"></p>
+      <button class="coupon-use-btn">Ishlatish</button>
+      <span class="coupon-stamp">Ishlatildi ✓</span>`;
+    body.querySelector(".coupon-emoji").textContent = k.emoji;
+    body.querySelector(".coupon-title").textContent = k.title;
+    body.querySelector(".coupon-text").textContent = k.text;
+    body.querySelector(".coupon-use-btn").addEventListener("click", () => openCouponModal(k, card));
+    card.appendChild(body);
+
+    if (!couponState.scratched[k.id]) {
+      const foil = document.createElement("canvas");
+      foil.className = "coupon-foil";
+      card.appendChild(foil);
+      requestAnimationFrame(() => setupFoil(foil, card, k));
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function setupFoil(canvas, card, coupon) {
+  const rect = card.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, rect.width);
+  const h = Math.max(1, rect.height);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  // Oltin folga
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, "#f7d27a");
+  g.addColorStop(0.35, "#fff1c1");
+  g.addColorStop(0.55, "#e9b54f");
+  g.addColorStop(1, "#f9dc8c");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // Yaltiroq nuqtalar
+  for (let i = 0; i < 45; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(Math.random() * w, Math.random() * h, Math.random() * 1.8 + 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = "rgba(120, 70, 10, 0.75)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "700 28px Montserrat, sans-serif";
+  ctx.fillText("❤", w / 2, h / 2 - 16);
+  ctx.font = "600 13px Montserrat, sans-serif";
+  ctx.fillText("Qirib och ✨", w / 2, h / 2 + 16);
+
+  let drawing = false;
+  let moves = 0;
+  let done = false;
+
+  const scratchAt = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+    addTouchParticles(e.clientX, e.clientY);
+
+    if (++moves % 6 === 0) checkCleared();
+  };
+
+  const checkCleared = () => {
+    if (done) return;
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clear = 0;
+    let total = 0;
+    for (let i = 3; i < data.length; i += 4 * 24) {
+      total++;
+      if (data[i] < 40) clear++;
+    }
+    if (clear / total > 0.45) reveal();
+  };
+
+  const reveal = () => {
+    done = true;
+    canvas.classList.add("cleared");
+    setTimeout(() => canvas.remove(), 650);
+    couponState.scratched[coupon.id] = true;
+    saveCouponState();
+    const r = card.getBoundingClientRect();
+    firework(r.left + r.width / 2, r.top + r.height / 2);
+    buzz([30, 20, 30]);
+    updateCouponButtons();
+  };
+
+  canvas.addEventListener("pointerdown", (e) => {
+    drawing = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    scratchAt(e);
+  });
+  canvas.addEventListener("pointermove", (e) => { if (drawing) scratchAt(e); });
+  const stop = () => {
+    drawing = false;
+    checkCleared();
+  };
+  canvas.addEventListener("pointerup", stop);
+  canvas.addEventListener("pointercancel", stop);
+}
+
+function openCouponModal(coupon, card) {
+  if (couponState.used[coupon.id]) return;
+  pendingCoupon = { coupon, card };
+  $("#coupon-modal-emoji").textContent = coupon.emoji;
+  $("#coupon-modal-title").textContent = `"${coupon.title}" kuponini ishlatasanmi?`;
+  $("#coupon-use").disabled = false;
+  $("#coupon-use").textContent = "Ishlataman ✨";
+  $("#coupon-modal").classList.remove("hidden");
+}
+
+function closeCouponModal() {
+  $("#coupon-modal").classList.add("hidden");
+  pendingCoupon = null;
+}
+
+$("#coupon-cancel").addEventListener("click", closeCouponModal);
+$("#coupon-modal .modal-backdrop").addEventListener("click", closeCouponModal);
+
+$("#coupon-use").addEventListener("click", async () => {
+  if (!pendingCoupon) return;
+  const { coupon, card } = pendingCoupon;
+  const btn = $("#coupon-use");
+  btn.disabled = true;
+  btn.textContent = "Yuborilmoqda...";
+
+  const ok = await sendEvent("coupon", `${coupon.emoji} ${coupon.title}`);
+  if (!ok) {
+    btn.disabled = false;
+    btn.textContent = "Internet yo'q — qayta urin 🔄";
+    return;
+  }
+
+  couponState.used[coupon.id] = true;
+  saveCouponState();
+  card.classList.add("used");
+  closeCouponModal();
+  confetti(140);
+  firework(W / 2, H * 0.35);
+  buzz([60, 40, 60]);
+});
+
+$("#coupons-next").addEventListener("click", openFinal);
+
+$("#coupons-back").addEventListener("click", () => {
+  showScene(couponReturnScene && couponReturnScene !== "coupons" ? couponReturnScene : "intro");
+  $("#coupons-fab").classList.remove("hidden");
+});
+
+$("#coupons-fab").addEventListener("click", () => openCoupons("visit"));
+
+/* =========================================================
+   6. FINAL: "KELASANMI?" (YO'Q TUGMASI QOCHADI)
+   ========================================================= */
+let noTries = 0;
+let finalOpened = false;
+const NO_TEXTS = ["Yo'q", "Ishonching komilmi? 🤨", "Yana o'ylab ko'r 🥺", "Iltimos...", "Baribir ushlay olmaysan 😜", "Ha'ni bos-da 🙈", "Charchadim... 😮‍💨"];
+
+async function openFinal() {
+  $("#final-title").textContent = content.finalMessage.title || "Bu hali hammasi emas...";
+  $("#final-text").textContent = content.finalMessage.text || "Kechqurun ko'rishamiz ❤️";
+
+  const fq = content.finalQuestion;
+  if (fq) {
+    NO_TEXTS[0] = fq.no || "Yo'q";
+    $("#ask-question").textContent = fq.question;
+    $("#ask-yes").textContent = fq.yes || "Ha ❤️";
+    $("#ask-no").textContent = NO_TEXTS[0];
+    $(".ask-done-text").textContent = fq.done || "Bilardim! ❤️ Seni kutaman...";
+    $("#ask-box").classList.remove("hidden");
+    $("#ask-done").classList.add("hidden");
+  } else {
+    $("#ask-box").classList.add("hidden");
+    $(".ask-done-text").classList.add("hidden");
+    $("#ask-done").classList.remove("hidden");
+  }
+
+  showScene("final");
+  if (finalOpened) return;
+  finalOpened = true;
+  await sleep(1600);
+  fireworkShow(4);
+}
+
+function fleeNoButton(e) {
+  if (e) e.preventDefault();
+  const no = $("#ask-no");
+  noTries++;
+
+  if (noTries >= NO_TEXTS.length) {
+    no.classList.add("tired");
+    setTimeout(() => no.classList.add("hidden"), 500);
+  } else {
+    no.textContent = NO_TEXTS[noTries];
+  }
+
+  const yesRect = $("#ask-yes").getBoundingClientRect();
+  const bw = no.offsetWidth || 120;
+  const bh = no.offsetHeight || 46;
+  const px = e && e.clientX != null ? e.clientX : null;
+  const py = e && e.clientY != null ? e.clientY : null;
+  let x;
+  let y;
+  let tries = 0;
+  do {
+    x = 12 + Math.random() * Math.max(10, W - bw - 24);
+    y = 70 + Math.random() * Math.max(10, H - bh - 140);
+    tries++;
+    // "Ha" tugmasiga ham, barmoq turgan joyga ham yaqin bo'lmasin
+  } while (
+    tries < 60 &&
+    ((x < yesRect.right + 20 && x + bw > yesRect.left - 20 &&
+      y < yesRect.bottom + 20 && y + bh > yesRect.top - 20) ||
+     (px != null && Math.hypot(x + bw / 2 - px, y + bh / 2 - py) < 160))
+  );
+
+  // Birinchi qochishda tugma sahnaning o'ziga ko'chiriladi — shunda butun ekran bo'ylab qochadi
+  if (!no.classList.contains("fleeing")) $("#final").appendChild(no);
+  no.classList.add("fleeing");
+  no.style.left = `${x}px`;
+  no.style.top = `${y}px`;
+
+  const scale = Math.min(1.8, 1 + noTries * 0.14);
+  $("#ask-yes").style.transform = `scale(${scale})`;
+  buzz(30);
+}
+
+$("#ask-no").addEventListener("pointerenter", fleeNoButton);
+$("#ask-no").addEventListener("pointerdown", fleeNoButton);
+$("#ask-no").addEventListener("click", fleeNoButton);
+
+$("#ask-yes").addEventListener("click", async () => {
+  $("#ask-box").classList.add("hidden");
+  $("#ask-no").classList.add("hidden");
+  $("#ask-done").classList.remove("hidden");
+
+  const extra = noTries > 0 ? ` ("Yo'q" tugmasini ${noTries} marta ushlashga urindi 😄)` : "";
+  sendEvent("answer", `${content.finalQuestion ? content.finalQuestion.question : ""} — HA!${extra}`);
+
+  buzz([100, 50, 100, 50, 200]);
+  confetti(260);
+  firework(W * 0.3, H * 0.3);
+  await sleep(300);
+  firework(W * 0.7, H * 0.25);
+  await sleep(300);
+  firework(W * 0.5, H * 0.2);
+});
+
+/* =========================================================
+   7. OSMONGA FONAR UCHIRISH
+   ========================================================= */
+let lanternTimer = null;
+let lanternsStarted = false;
+
+function spawnLantern(main = false) {
+  const sky = $("#lantern-sky");
+  const el = document.createElement("div");
+  el.className = "lantern" + (main ? " main" : "");
+
+  const size = main ? 64 : 12 + Math.random() * 26;
+  const dur = main ? 10 : 11 + Math.random() * 11;
+  el.style.setProperty("--s", `${size}px`);
+  el.style.setProperty("--dur", `${dur}s`);
+  el.style.setProperty("--sway", `${(Math.random() - 0.5) * 90}px`);
+  el.style.left = main ? `calc(50% - ${size / 2}px)` : `${Math.random() * 96}%`;
+  // Kichiklari — uzoqdagilar, shuning uchun xiraroq
+  el.style.opacity = main ? "1" : String(Math.min(0.95, 0.35 + size / 55));
+  el.innerHTML = '<div class="lantern-body"></div>';
+
+  sky.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000 + 300);
+}
+
+function setLanternRate(perSecond) {
+  if (lanternTimer) clearInterval(lanternTimer);
+  lanternTimer = setInterval(() => spawnLantern(), 1000 / perSecond);
+}
+
+$("#to-lanterns").addEventListener("click", () => {
+  showScene("lanterns");
+  if (!lanternsStarted) {
+    lanternsStarted = true;
+    for (let i = 0; i < 4; i++) setTimeout(() => spawnLantern(), i * 400);
+    setLanternRate(0.7);
+  }
+});
+
+$("#wish-btn").addEventListener("click", async () => {
+  const ta = $("#wish-text");
+  const text = ta.value.trim();
+  if (!text) {
+    ta.placeholder = "Bitta so'z bo'lsa ham yoz 🥺";
+    ta.classList.remove("shake");
+    void ta.offsetWidth;
+    ta.classList.add("shake");
+    return;
+  }
+
+  ta.blur();
+  $("#wish-box").classList.add("hidden");
+  sendEvent("wish", text);
+
+  spawnLantern(true);
+  buzz([80, 60, 80]);
+  for (let i = 0; i < 26; i++) setTimeout(() => spawnLantern(), 300 + i * 140);
+  setLanternRate(2.5);
+
+  await sleep(2500);
+  $("#wish-sent").classList.remove("hidden");
+  confetti(90);
+
+  await sleep(2500);
+  $("#secret-btn").classList.remove("hidden");
+  if (content.allowReply) $("#reply-form").classList.remove("hidden");
+  setLanternRate(1.2);
+});
+
+/* =========================================================
+   SIRLI TUGMA (EASTER EGG) VA JAVOB YOZISH
    ========================================================= */
 $("#secret-btn").addEventListener("click", () => {
   confetti(150);
