@@ -11,7 +11,7 @@ module.exports = {
   unlockAt: "2026-11-26T00:00:00+05:00",
 
   // 3. Sinov rejimi: true — darhol ochiladi, false — faqat unlockAt vaqtida
-  testMode: true,
+  testMode: false,
 
   // 4. Tortdagi shamlar soni (1 dan 12 gacha)
   candles: 11,
