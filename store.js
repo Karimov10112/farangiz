@@ -102,6 +102,14 @@ async function listEntries() {
   }
 }
 
+// Hammasini o'chirish (admin paneldagi "Tozalash" tugmasi uchun)
+async function clearAll() {
+  writeFileList([]);
+  if (!pool) return;
+  await ready;
+  await pool.query("DELETE FROM replies");
+}
+
 const storageName = () => (pool ? "database" : "file");
 
-module.exports = { addEntry, listEntries, storageName };
+module.exports = { addEntry, listEntries, clearAll, storageName };

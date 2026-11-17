@@ -97,6 +97,19 @@ module.exports = {
     text: "Eng muhimi seni kechqurun kutyapti. Soat 18:00 da tayyor tur. Har doimgi joyda ❤️"
   },
 
+  // 7.0. Rasm boshqotirmasi — yurak bosqichidan keyin, xatni ochish uchun yig'iladi.
+  //   photo   — content/photos papkasidagi rasm nomi (har qanday o'lchamda bo'lishi mumkin)
+  //   message — rasm yig'ilganda chiqadigan yashirin xabar
+  //   O'chirish uchun: puzzle: null
+  puzzle: {
+    photo: "photo3.jpg",
+    message: "Bizning hayotimiz ham shunday — bo'laklari qayerda bo'lmasin, oxiri baribir bir-biriga mos tushadi ❤️"
+  },
+
+  // 7.0.1. Uchrashuv vaqti — finalda "Ko'rishishimizga qoldi 05:12:30" deb jonli sanaladi.
+  //   Kerak bo'lmasa: meetAt: null
+  meetAt: "2026-11-26T18:00:00+05:00",
+
   // 7.1. "Meni qanchalik bilasan?" testi
   //   answer — to'g'ri javobning tartib raqami (0 dan boshlanadi: 0 = birinchi variant)
   //   right  — to'g'ri topsa chiqadigan izoh

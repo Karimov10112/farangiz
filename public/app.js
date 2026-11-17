@@ -9,8 +9,48 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let content = null;
 let currentScene = "lock";
 
+/* ---------- Kuzatuv: u qaysi bosqichda ekanini sizga yuborish ---------- */
+const SCENE_LABELS = {
+  lock: "🔒 Qulflangan sahifani ochdi — 00:00 ni kutyapti",
+  intro: "🌐 Saytni ochdi",
+  cake: "🎂 Sovg'ani ochdi, tortga o'tdi",
+  stars: "⭐ Shamlarni o'chirdi, yulduzlarga o'tdi",
+  heartbeat: "💓 Yulduzlarni ko'rib bo'ldi, yurakka o'tdi",
+  puzzle: "🧩 Boshqotirmaga o'tdi",
+  letter: "💌 Xatni ochyapti",
+  quiz: "🧠 Xatni o'qidi, testga o'tdi",
+  coupons: "🎟 Kuponlarga o'tdi",
+  final: "❤️ Final sahifaga yetdi",
+  lanterns: "🏮 Fonarlar sahifasiga o'tdi",
+};
+const VISIT_START = Date.now();
+const sentScenes = new Set();
+let visitNo = 1;
+try {
+  visitNo = Number(localStorage.getItem("farangiz-visits") || 0) + 1;
+  localStorage.setItem("farangiz-visits", String(visitNo));
+} catch (_) {}
+// Admin panelni ochgan qurilma (ya'ni siz) kuzatilmaydi — sinovlaringiz aralashmasin
+const isOwnerDevice = (() => {
+  try { return localStorage.getItem("farangiz-owner") === "1"; } catch (_) { return false; }
+})();
+
+function trackProgress(id) {
+  if (isOwnerDevice || sentScenes.has(id) || !SCENE_LABELS[id]) return;
+  sentScenes.add(id);
+  const mins = Math.round((Date.now() - VISIT_START) / 60000);
+  const text = `${SCENE_LABELS[id]}  ·  ${visitNo}-kirish, ${mins} daq`;
+  fetch("/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "progress", text }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function showScene(id) {
   currentScene = id;
+  trackProgress(id);
   document.querySelectorAll(".scene").forEach((s) => s.classList.remove("active"));
   const target = $("#" + id);
   if (target) target.classList.add("active");
@@ -531,11 +571,12 @@ async function checkStatusAndInit() {
     return;
   }
 
+  serverOffset = statusData.serverNow - Date.now();
+
   if (statusData.unlocked) {
     return loadContentAndUnlock();
   }
 
-  serverOffset = statusData.serverNow - Date.now();
   showScene("lock");
 
   const pad = (n) => String(Math.max(0, n)).padStart(2, "0");
@@ -995,8 +1036,216 @@ pulseHeartEl.addEventListener("pointerleave", stopHeartPress);
 
 $("#to-letter").addEventListener("click", () => {
   if (loveTimer) clearInterval(loveTimer);
+  if (content.puzzle && content.puzzle.photo) return startPuzzle();
   showScene("letter");
 });
+
+/* =========================================================
+   4.7. RASM BOSHQOTIRMASI (XATNI OCHISH UCHUN)
+   ========================================================= */
+const PUZZLE_N = 3;
+let puzzleOrder = [];   // puzzleOrder[joy] = bo'lak raqami
+let puzzleSelected = null;
+let puzzleSolved = false;
+let puzzleImageUrl = null;
+
+// Rasmni kvadrat qilib o'rtasidan qirqib olamiz — har qanday o'lchamdagi rasm chiroyli bo'linadi
+function loadSquareImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      const size = Math.min(900, side);
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      c.getContext("2d").drawImage(
+        img,
+        (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side,
+        0, 0, size, size
+      );
+      try { resolve(c.toDataURL("image/jpeg", 0.88)); } catch (_) { resolve(url); }
+    };
+    img.onerror = () => resolve(url);
+    img.src = url;
+  });
+}
+
+async function startPuzzle() {
+  showScene("puzzle");
+  if (puzzleImageUrl) return; // allaqachon tayyor (orqaga qaytilgan bo'lsa)
+
+  $("#puzzle-board").classList.add("loading");
+  puzzleImageUrl = await loadSquareImage(content.puzzle.photo);
+  $("#puzzle-board").classList.remove("loading");
+  $("#puzzle-peek-img").src = puzzleImageUrl;
+
+  // Aralashtirish: hech bir bo'lak o'z joyida qolmasin
+  const total = PUZZLE_N * PUZZLE_N;
+  do {
+    puzzleOrder = [...Array(total).keys()].sort(() => Math.random() - 0.5);
+  } while (puzzleOrder.some((piece, place) => piece === place));
+
+  renderPuzzle();
+}
+
+function renderPuzzle() {
+  const board = $("#puzzle-board");
+  board.innerHTML = "";
+  puzzleOrder.forEach((piece, place) => {
+    const el = document.createElement("div");
+    el.className = "puzzle-piece";
+    if (piece === place) el.classList.add("in-place");
+    if (puzzleSelected === place) el.classList.add("selected");
+    const col = piece % PUZZLE_N;
+    const row = Math.floor(piece / PUZZLE_N);
+    el.style.backgroundImage = `url("${puzzleImageUrl}")`;
+    el.style.backgroundSize = `${PUZZLE_N * 100}% ${PUZZLE_N * 100}%`;
+    el.style.backgroundPosition = `${(col / (PUZZLE_N - 1)) * 100}% ${(row / (PUZZLE_N - 1)) * 100}%`;
+    el.dataset.place = place;
+    attachPuzzleDrag(el, place);
+    board.appendChild(el);
+  });
+  const done = puzzleOrder.filter((piece, place) => piece === place).length;
+  $("#puzzle-count").textContent = `${done} / ${puzzleOrder.length} joyida`;
+}
+
+function swapPuzzle(a, b) {
+  if (a === b || puzzleSolved) return;
+  [puzzleOrder[a], puzzleOrder[b]] = [puzzleOrder[b], puzzleOrder[a]];
+  puzzleSelected = null;
+  buzz(20);
+  renderPuzzle();
+  if (puzzleOrder[b] === b) {
+    const el = $(`#puzzle-board [data-place="${b}"]`);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      addTouchParticles(r.left + r.width / 2, r.top + r.height / 2);
+    }
+  }
+  if (puzzleOrder.every((piece, place) => piece === place)) onPuzzleSolved();
+}
+
+// Bo'lakni barmoq bilan surib boshqasining ustiga tashlash yoki ikkitasini ketma-ket bosish
+function attachPuzzleDrag(el, place) {
+  let startX = 0;
+  let startY = 0;
+  let moved = false;
+  let dragging = false;
+
+  el.addEventListener("pointerdown", (e) => {
+    if (puzzleSolved) return;
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+
+  el.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!moved && Math.hypot(dx, dy) > 8) {
+      moved = true;
+      el.classList.add("dragging");
+    }
+    if (moved) el.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+  });
+
+  const end = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    if (moved) {
+      el.style.transform = "";
+      el.classList.remove("dragging");
+      el.style.visibility = "hidden";
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      el.style.visibility = "";
+      const target = under && under.closest(".puzzle-piece");
+      if (target) swapPuzzle(place, Number(target.dataset.place));
+      else renderPuzzle();
+    } else if (puzzleSelected === null) {
+      puzzleSelected = place;
+      renderPuzzle();
+    } else {
+      const other = puzzleSelected;
+      if (other === place) {
+        puzzleSelected = null;
+        renderPuzzle();
+      } else swapPuzzle(other, place);
+    }
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", () => {
+    dragging = false;
+    el.style.transform = "";
+    el.classList.remove("dragging");
+  });
+}
+
+async function onPuzzleSolved() {
+  puzzleSolved = true;
+  $("#puzzle-board").classList.add("solved");
+  $("#puzzle-peek").classList.add("hidden");
+  $("#puzzle-hint").classList.add("hidden");
+  buzz([80, 50, 80, 50, 160]);
+  confetti(180);
+  const r = $("#puzzle-board").getBoundingClientRect();
+  firework(r.left + r.width / 2, r.top + r.height / 2);
+  await sleep(1100);
+  $("#puzzle-message").textContent = content.puzzle.message || "";
+  $("#puzzle-done").classList.remove("hidden");
+}
+
+// "Rasmga qarab olish" — 2 soniyaga asl rasm ko'rinadi
+$("#puzzle-peek").addEventListener("click", async () => {
+  if (puzzleSolved || !puzzleImageUrl) return;
+  const peek = $("#puzzle-peek-img");
+  peek.classList.add("show");
+  await sleep(2000);
+  peek.classList.remove("show");
+});
+
+$("#puzzle-next").addEventListener("click", () => showScene("letter"));
+
+/* =========================================================
+   FINAL: UCHRASHUVGACHA TESKARI SANOQ
+   ========================================================= */
+let meetTimer = null;
+
+function startMeetCountdown() {
+  const box = $("#meet-countdown");
+  const target = content.meetAt ? new Date(content.meetAt).getTime() : NaN;
+  if (isNaN(target)) {
+    box.classList.add("hidden");
+    return;
+  }
+  box.classList.remove("hidden");
+  if (meetTimer) clearInterval(meetTimer);
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const tick = () => {
+    // Server soati bo'yicha (telefon soati noto'g'ri bo'lsa ham to'g'ri hisoblaydi)
+    const left = target - (Date.now() + serverOffset);
+    if (left <= 0) {
+      $("#meet-label").textContent = "";
+      $("#meet-time").textContent = "Men seni kutyapman 🥰";
+      box.classList.add("arrived");
+      clearInterval(meetTimer);
+      return;
+    }
+    const total = Math.floor(left / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    $("#meet-label").textContent = "Ko'rishishimizga qoldi";
+    $("#meet-time").textContent = h >= 48
+      ? `${Math.floor(h / 24)} kun ${pad(h % 24)}:${pad(m)}:${pad(sec)}`
+      : `${pad(h)}:${pad(m)}:${pad(sec)}`;
+  };
+  tick();
+  meetTimer = setInterval(tick, 1000);
+}
 
 /* =========================================================
    5. KONVERT VA XAT
@@ -1472,6 +1721,7 @@ async function openFinal() {
     $("#ask-done").classList.remove("hidden");
   }
 
+  startMeetCountdown();
   showScene("final");
   if (finalOpened) return;
   finalOpened = true;
