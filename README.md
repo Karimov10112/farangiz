@@ -30,6 +30,9 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 | `letter` | Konvert ichidagi xat: murojaat (`greeting`), abzaslar (`paragraphs`) va imzo (`signature`) |
 | `finalMessage` | Oxirgi sahifadagi katta sarlavha va matn |
 | `music` | Fon musiqasi fayli nomi (`content/music` papkasiga tashlanadi). Kerak bo'lmasa `null` |
+| `quiz.questions` | "Meni qanchalik bilasan?" testi savollari. `answer` — to'g'ri variant raqami (0 dan boshlanadi). O'chirish: `questions: []` |
+| `coupons` | Qirib ochiladigan sevgi kuponlari. U kuponni "ishlatsa", sizga xabar keladi. O'chirish: `coupons: []` |
+| `finalQuestion` | Finaldagi savol ("Kechqurun kelasanmi?"). "Yo'q" tugmasi qochib ketadi. O'chirish: `finalQuestion: null` |
 | `allowReply` | U oxirida sizga javob yoza oladimi (`true` / `false`) |
 | `adminKey` | Javoblarni o'qish sahifasi paroli (internetda `ADMIN_KEY` muhit o'zgaruvchisi ishlatiladi) |
 | `telegram` | U javob yozganda xabar Telegramingizga keladi (token serverda saqlanadi, pastga qarang) |
@@ -81,11 +84,25 @@ U sayt oxirida sizga javob yozib yuborganida, xabarni quyidagi manzilda o'qiysiz
    - Oxirida o'ng tomonda sizning imzoyingiz yoziladi.
    - Qog'ozga bosilsa, xat bir zumda to'liq chiqadi.
 
-6. **Final:**
-   - Katta oltin yozuv: *“Bu hali hammasi emas...”*.
-   - So'ng: *“Kechqurun ko'rishamiz ❤️”*.
-   - Yana salyut otiladi.
-   - Pastda javob yozish oynasi: *“Menga bir nima desang...”*. U yozib yuborsa, *“Yetib keldi ❤️”* yozuvi chiqadi va konfetti yog'iladi.
+6. **"Meni qanchalik bilasan?" testi:**
+   - Savollar birma-bir chiqadi. Birinchi urinishda to'g'ri topilgan har bir javob uchun yurak qizaradi ❤️.
+   - Xato javob tugmasi silkinib o'chadi va hazil izoh chiqadi. Oxirida natija (masalan `4 / 5`) va iliq so'zlar ko'rsatiladi.
+
+7. **Sevgi kuponlari:**
+   - Oltin folga bilan qoplangan kuponlar. U ularni barmog'i bilan qirib ochadi.
+   - "Ishlatish" bosilsa, sizga xabar keladi va kuponga "Ishlatildi ✓" muhri bosiladi.
+   - Saytga keyinroq qayta kirsa, pastki chap burchakda 🎟 tugmasi chiqadi va kuponlarni istalgan paytda ishlata oladi.
+
+8. **Final — "Kelasanmi?":**
+   - *“Bu hali hammasi emas...”* va uchrashuv haqidagi matn.
+   - Savol: *“Kechqurun 18:00 da kelasanmi?”* "Yo'q" tugmasi qochib ketadi va har safar matni o'zgaradi, "Ha" esa kattalashib boradi 😄.
+   - "Ha" bosilsa, salyut otiladi va javobi sizga yetib keladi.
+
+9. **Osmonga fonarlar:**
+   - U tilagini yozadi va "Fonarni uchirish 🏮" ni bosadi. Katta fonar osmonga ko'tariladi, atrofdan yuzlab fonarlar uchib chiqadi.
+   - So'ng sirli tugma va *“Menga bir nima desang...”* javob oynasi chiqadi.
+
+> Uning barcha harakatlari (test natijasi, ishlatgan kuponlari, "Ha" javobi, tilagi va xati) admin panelda belgilari bilan ko'rinadi, Telegram sozlangan bo'lsa, u yerga ham keladi.
 
 ---
 

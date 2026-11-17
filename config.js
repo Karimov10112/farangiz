@@ -97,6 +97,66 @@ module.exports = {
     text: "Eng muhimi seni kechqurun kutyapti. Soat 18:00 da tayyor tur. Har doimgi joyda ❤️"
   },
 
+  // 7.1. "Meni qanchalik bilasan?" testi
+  //   answer — to'g'ri javobning tartib raqami (0 dan boshlanadi: 0 = birinchi variant)
+  //   right  — to'g'ri topsa chiqadigan izoh
+  //   Savol qo'shish/o'chirish mumkin. Testni o'chirish uchun: questions: []
+  quiz: {
+    questions: [
+      {
+        q: "Biz qachon tanishganmiz?",
+        options: ["15-may", "5-iyun", "1-iyul", "20-iyun"],
+        answer: 1,
+        right: "Ha! Hayotimdagi eng omadli kun ✨"
+      },
+      {
+        q: "Men seni qanday erkalab chaqiraman?",
+        options: ["Asalim", "Quyoshim", "Hanuyim", "Jonim"],
+        answer: 2,
+        right: "Faqat sen shunday atalishga loyiqsan, Hanuyim 🥰"
+      },
+      {
+        q: "Sen esa meni qanday chaqirasan?",
+        options: ["Dudu", "Bubu", "Asalim", "Shunchaki ismim bilan"],
+        answer: 0,
+        right: "Dudu doim sening yoningda 🐻"
+      },
+      {
+        q: "Bu saytda yangrayotgan musiqa qaysi serialdan?",
+        options: ["Qora sevgi (Kara Sevda)", "Titanik", "Kuz hikoyasi", "Sen qo'ng'iroqni chal"],
+        answer: 0,
+        right: "Bizning qo'shig'imiz 🎵"
+      },
+      {
+        q: "Men dunyoda eng ko'p nimani yaxshi ko'raman?",
+        options: ["Futbolni", "Telefonimni", "Uxlashni", "Seni"],
+        answer: 3,
+        right: "Albatta seni! Boshqa javob bo'lishi mumkin emas edi ❤️"
+      }
+    ]
+  },
+
+  // 7.2. Sevgi kuponlari — u qirib ochadi va istagan paytida "ishlatadi".
+  //   Ishlatganida sizga xabar keladi (admin panel / Telegram). Va'dangizda turing 😉
+  //   O'chirish uchun: coupons: []
+  coupons: [
+    { emoji: "🍽️", title: "Istagan joyingda kechki ovqat", text: "Qayerni tanlasang — o'sha yerga boramiz. Hisob mendan." },
+    { emoji: "👑", title: "Bir kunlik malika", text: "Butun kun nima desang — shu. Hech qanday 'yo'q' yo'q." },
+    { emoji: "🕊️", title: "Kechirim kuponi", text: "Bir marta xafa qilsam — shuni ko'rsat, darhol yarashamiz." },
+    { emoji: "🎬", title: "Kino kechasi", text: "Filmni sen tanlaysan, men bir og'iz ham shikoyat qilmayman." },
+    { emoji: "💐", title: "Sababsiz gul", text: "Kutilmagan bir kunda eshigingda gul bilan turaman." },
+    { emoji: "🌙", title: "Kechki sayr", text: "Telefonlarsiz, faqat ikkimiz — istagan oqshomingda." }
+  ],
+
+  // 7.3. Finaldagi savol: "Yo'q" tugmasi qochib ketadi 😄
+  //   Kerak bo'lmasa: finalQuestion: null
+  finalQuestion: {
+    question: "Kechqurun 18:00 da kelasanmi?",
+    yes: "Ha ❤️",
+    no: "Yo'q",
+    done: "Bilardim! ❤️ Seni kutaman..."
+  },
+
   // 8. Musiqa ("Kara Sevda")
   music: "music.mp3",
 
