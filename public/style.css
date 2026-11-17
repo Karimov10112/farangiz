@@ -1888,3 +1888,473 @@ input, textarea {
   color: var(--gold);
   animation: pulseStar 1.6s infinite;
 }
+
+/* =========================================================
+   3.5. CHAT ("Dudu yozmoqda...")
+   ========================================================= */
+.chat-phone {
+  width: min(94vw, 420px);
+  height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 26px;
+  overflow: hidden;
+  background: rgba(14, 10, 34, 0.88);
+  border: 1px solid rgba(255, 217, 138, 0.25);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+  animation: fadeUp 0.7s ease both;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+.chat-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, var(--pink), var(--gold));
+}
+
+.chat-name { font-weight: 600; font-size: 1rem; }
+.chat-status { font-size: 0.78rem; color: #8ec5ff; }
+
+.chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 143, 184, 0.06), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(142, 197, 255, 0.06), transparent 50%);
+}
+
+.bubble {
+  max-width: 82%;
+  padding: 9px 12px 6px;
+  border-radius: 16px;
+  font-size: 0.98rem;
+  line-height: 1.38;
+  text-align: left;
+  animation: bubbleIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  word-break: break-word;
+}
+
+.bubble small {
+  display: block;
+  text-align: right;
+  font-size: 0.66rem;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+.bubble.them {
+  align-self: flex-start;
+  background: #2a2150;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble.me {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #c9407a, #e85587);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.typing {
+  display: flex;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.bubble.typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cfc3ff;
+  animation: typingDot 1s infinite ease-in-out;
+}
+.bubble.typing i:nth-child(2) { animation-delay: 0.15s; }
+.bubble.typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.chat-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  animation: fadeUp 0.5s ease both;
+}
+
+.chat-chip {
+  font: 500 0.9rem "Montserrat", sans-serif;
+  color: #fff;
+  padding: 9px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 143, 184, 0.6);
+  background: rgba(255, 143, 184, 0.15);
+  cursor: pointer;
+}
+
+.chat-next {
+  margin: 12px auto 16px;
+}
+
+/* =========================================================
+   4.2. RAQAMLARDA SENING HAYOTING
+   ========================================================= */
+.stats-wrap {
+  width: min(94vw, 430px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px 16px;
+}
+
+.stats-heading {
+  font-size: clamp(2.3rem, 10vw, 3.2rem);
+  color: var(--gold);
+  text-shadow: 0 0 25px var(--gold-glow);
+  line-height: 1.1;
+}
+
+.stats-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 62vh;
+  padding: 4px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 217, 138, 0.2);
+  text-align: left;
+  animation: fadeUp 0.6s ease both;
+}
+
+.stat-emoji { font-size: 1.8rem; }
+
+.stat-num {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+.stat-row.stat-love {
+  background: linear-gradient(135deg, rgba(255, 143, 184, 0.25), rgba(255, 217, 138, 0.15));
+  border-color: var(--pink);
+  box-shadow: 0 0 22px var(--pink-glow);
+}
+
+.stat-love .stat-num { color: #fff; }
+
+/* =========================================================
+   5.6. SELFI
+   ========================================================= */
+.selfie-wrap,
+.draw-wrap,
+.ball-wrap {
+  width: min(94vw, 420px);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px 16px;
+}
+
+.selfie-heading,
+.draw-heading,
+.ball-heading {
+  font-size: clamp(2.2rem, 9.5vw, 3rem);
+  color: var(--gold);
+  text-shadow: 0 0 25px var(--gold-glow);
+  line-height: 1.1;
+}
+
+.selfie-frame {
+  position: relative;
+  width: min(80vw, 330px);
+  aspect-ratio: 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(circle, #2a1f55, #120c2c);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 0 3px rgba(255, 217, 138, 0.7), 0 0 35px rgba(255, 143, 184, 0.45);
+}
+
+.selfie-video,
+.selfie-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.selfie-video { transform: scaleX(-1); }
+
+.selfie-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0 10px;
+}
+
+.selfie-crown {
+  font-size: 2.6rem;
+  filter: drop-shadow(0 0 12px rgba(255, 217, 138, 0.9));
+}
+
+.selfie-tag {
+  font-family: "Great Vibes", cursive;
+  font-size: 1.6rem;
+  color: var(--gold);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.selfie-count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 6rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 30px var(--pink);
+}
+
+.selfie-count.pop { animation: heartPop 0.6s ease; }
+
+.selfie-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.selfie-flash.go { animation: flash 0.5s ease-out; }
+
+@keyframes flash {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+
+.selfie-hint { max-width: 320px; }
+
+.selfie-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.selfie-actions label.btn { cursor: pointer; }
+.selfie-actions a.btn { text-decoration: none; }
+
+/* =========================================================
+   5.65. RASM CHIZISH
+   ========================================================= */
+.draw-canvas {
+  /* Umumiy "canvas { position: fixed }" qoidasini bekor qilish */
+  position: relative;
+  inset: auto;
+  width: min(84vw, 340px, 46vh);
+  height: min(84vw, 340px, 46vh);
+  flex-shrink: 0;
+  border-radius: 16px;
+  touch-action: none;
+  cursor: crosshair;
+  box-shadow: 0 0 0 3px rgba(255, 217, 138, 0.6), 0 15px 40px rgba(0, 0, 0, 0.45);
+}
+
+.draw-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.draw-colors {
+  display: flex;
+  gap: 8px;
+}
+
+.draw-color {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  color: #555;
+  font-size: 0.9rem;
+  transition: transform 0.15s;
+}
+
+.draw-color.active {
+  transform: scale(1.2);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.draw-tool {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.draw-hint {
+  font-size: 0.85rem;
+  color: var(--gold);
+  opacity: 0.9;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   5.68. SEHRLI SHAR
+   ========================================================= */
+.magic-ball {
+  width: min(56vw, 220px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  margin: 8px 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 32% 28%, #5b4a9a 0%, #1c1440 45%, #07051a 80%);
+  box-shadow: 0 0 40px rgba(160, 120, 255, 0.45), inset -18px -22px 40px rgba(0, 0, 0, 0.6), inset 10px 12px 25px rgba(255, 255, 255, 0.08);
+  animation: ballFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes ballFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.magic-ball.shaking { animation: ballShake 0.18s infinite; }
+
+@keyframes ballShake {
+  0% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-6px, 3px) rotate(-4deg); }
+  50% { transform: translate(5px, -4px) rotate(3deg); }
+  75% { transform: translate(-4px, -2px) rotate(-2deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+
+.ball-window {
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  background: radial-gradient(circle, #24357a 0%, #0d1236 75%);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+.ball-answer {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #bfe3ff;
+  text-shadow: 0 0 10px rgba(120, 190, 255, 0.9);
+}
+
+.ball-answer.show { animation: fadeUp 0.8s ease both; }
+
+.ball-progress {
+  font-size: 0.85rem;
+  color: var(--pink);
+}
+
+.ball-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.ball-input {
+  width: 100%;
+  font: 1rem "Montserrat", sans-serif;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(160, 120, 255, 0.5);
+  border-radius: 14px;
+  padding: 13px 14px;
+  outline: none;
+}
+
+.ball-input:focus {
+  border-color: #b9a2ff;
+  box-shadow: 0 0 16px rgba(160, 120, 255, 0.4);
+}
+
+.ball-input.shake { animation: shake 0.45s; }
+
+/* Kichik ekranlarda rang tugmalari sig'ishi uchun */
+.draw-tools {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+  padding: 4px;
+}
+
+@media (max-width: 400px) {
+  .draw-colors { gap: 6px; }
+  .draw-color { width: 28px; height: 28px; }
+  .draw-tool { width: 32px; height: 32px; font-size: 1rem; }
+}

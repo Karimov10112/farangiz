@@ -97,12 +97,44 @@ module.exports = {
     text: "Eng muhimi seni kechqurun kutyapti. Soat 18:00 da tayyor tur. Har doimgi joyda ❤️"
   },
 
+  // 6.1. "Dudu yozmoqda..." chat — tortdan keyin xabarlar birma-bir, haqiqiy chatdagidek keladi.
+  //   messages — sizning xabarlaringiz (tartib bilan)
+  //   replies  — u bosadigan tayyor javob tugmalari
+  //   answer   — uning javobidan keyin siz yozadigan oxirgi xabar
+  //   O'chirish uchun: chat: null
+  chat: {
+    messages: [
+      "Hanuyim, uxlamadingmi? 🙈",
+      "Bilaman, uxlamagansan 😄",
+      "Tilak qildingmi? Nima tilaganingni aytma — faqat ushalishiga ishon ✨",
+      "Bir narsani bilib qo'y...",
+      "Bugun faqat sening tug'ilgan kuning emas. Bugun — dunyoga mening eng yaqin insonim kelgan kun ❤️",
+      "Endi osmonga qara... u yerda senga atalgan yulduzlar bor 🌟"
+    ],
+    replies: ["Men ham seni sevaman ❤️", "Dudu 🥺", "Rahmat, jonim 🥰"],
+    answer: "Bilardim 🥰 Ketdik!"
+  },
+
+  // 6.2. "Raqamlarda sening hayoting" — ism yulduzlardan yig'ilgandan keyin.
+  //   birthDate — tug'ilgan sanasi. O'chirish uchun: lifeStats: null
+  lifeStats: {
+    birthDate: "2007-11-26",
+    metDate: "2026-06-05"
+  },
+
+  // 6.3. Testdan keyingi majburiy bosqichlar (o'chirish uchun false qiling):
+  selfie: true,     // 📸 Tug'ilgan kun selfisi (toj va ramka bilan)
+  drawing: true,    // 🎨 "Menga rasm chizib ber"
+  magicBall: {      // 🔮 Sehrli shar — nechta savol berishi shart
+    questions: 3
+  },
+
   // 7.0. Rasm boshqotirmasi — yurak bosqichidan keyin, xatni ochish uchun yig'iladi.
   //   photo   — content/photos papkasidagi rasm nomi (har qanday o'lchamda bo'lishi mumkin)
   //   message — rasm yig'ilganda chiqadigan yashirin xabar
   //   O'chirish uchun: puzzle: null
   puzzle: {
-    photo: "photo3.jpg",
+    photo: "puzzle.jpg",
     message: "Bizning hayotimiz ham shunday — bo'laklari qayerda bo'lmasin, oxiri baribir bir-biriga mos tushadi ❤️"
   },
 

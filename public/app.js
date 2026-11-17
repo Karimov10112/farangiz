@@ -14,9 +14,14 @@ const SCENE_LABELS = {
   lock: "🔒 Qulflangan sahifani ochdi — 00:00 ni kutyapti",
   intro: "🌐 Saytni ochdi",
   cake: "🎂 Sovg'ani ochdi, tortga o'tdi",
-  stars: "⭐ Shamlarni o'chirdi, yulduzlarga o'tdi",
-  heartbeat: "💓 Yulduzlarni ko'rib bo'ldi, yurakka o'tdi",
+  stars: "⭐ Yulduzli osmonga o'tdi",
+  heartbeat: "💓 Yurak bosqichiga o'tdi",
+  chat: "💬 Shamlarni o'chirdi, chatni o'qiyapti",
+  stats: "📊 Ismini ko'rdi, \"Raqamlarda hayoting\"ga o'tdi",
   puzzle: "🧩 Boshqotirmaga o'tdi",
+  selfie: "📸 Selfi bosqichiga o'tdi",
+  drawing: "🎨 Rasm chizish bosqichiga o'tdi",
+  ball: "🔮 Sehrli sharga o'tdi",
   letter: "💌 Xatni ochyapti",
   quiz: "🧠 Xatni o'qidi, testga o'tdi",
   coupons: "🎟 Kuponlarga o'tdi",
@@ -840,8 +845,8 @@ async function onAllCandlesBlown() {
 }
 
 $("#to-stars").addEventListener("click", () => {
-  buildStarField();
-  showScene("stars");
+  if (content.chat) return startChat();
+  goStars();
 });
 
 /* =========================================================
@@ -933,8 +938,8 @@ $("#to-heartbeat").addEventListener("click", () => {
     makeStars();
   }, 2000);
 
-  startLoveCounter();
-  showScene("heartbeat");
+  if (content.lifeStats) return showStats();
+  goHeartbeat();
 });
 
 /* =========================================================
@@ -1355,11 +1360,7 @@ const hasQuiz = () => content.quiz && content.quiz.length > 0;
 const hasCoupons = () => content.coupons && content.coupons.length > 0;
 
 // Xatdan keyin: test → kuponlar → final (qaysi biri yoqilgan bo'lsa)
-$("#to-final").addEventListener("click", () => {
-  if (hasQuiz()) return startQuiz();
-  if (hasCoupons()) return openCoupons("flow");
-  openFinal();
-});
+$("#to-final").addEventListener("click", () => goAfter("letter"));
 
 /* =========================================================
    5.5. "MENI QANCHALIK BILASAN?" TESTI
@@ -1465,7 +1466,7 @@ function finishQuiz() {
       : ratio >= 0.6
         ? "Deyarli mukammal! Qolganini kechqurun o'rgataman 😉"
         : "Hechqisi yo'q — meni bilib olishga hali butun umrimiz bor 🥰";
-  $("#quiz-next").textContent = hasCoupons() ? "Senga sovg'alarim bor 🎁" : "Davom etish →";
+  $("#quiz-next").textContent = "Davom etish →";
   $("#quiz-result").classList.remove("hidden");
 
   confetti(ratio === 1 ? 220 : 120);
@@ -1473,10 +1474,7 @@ function finishQuiz() {
   sendEvent("quiz", `${quizScore} / ${total} (birinchi urinishda to'g'ri topganlari)`);
 }
 
-$("#quiz-next").addEventListener("click", () => {
-  if (hasCoupons()) openCoupons("flow");
-  else openFinal();
-});
+$("#quiz-next").addEventListener("click", () => goAfter("quiz"));
 
 /* =========================================================
    5.7. SEVGI KUPONLARI (QIRIB OCHILADIGAN)
@@ -1959,6 +1957,540 @@ document.addEventListener("click", (e) => {
     $("#reply-text").focus();
   }
 });
+
+/* =========================================================
+   OQIM: XATDAN KEYINGI BOSQICHLAR TARTIBI
+   (qaysi biri config.js da yoqilgan bo'lsa — shu tartibda)
+   ========================================================= */
+const POST_LETTER = [
+  ["quiz", () => hasQuiz(), () => startQuiz()],
+  ["selfie", () => !!content.selfie, () => startSelfie()],
+  ["drawing", () => !!content.drawing, () => startDrawing()],
+  ["ball", () => !!content.magicBall, () => startBall()],
+  ["coupons", () => hasCoupons(), () => openCoupons("flow")],
+  ["final", () => true, () => openFinal()],
+];
+
+function goAfter(stage) {
+  const i = POST_LETTER.findIndex(([name]) => name === stage);
+  for (let j = i + 1; j < POST_LETTER.length; j++) {
+    if (POST_LETTER[j][1]()) return POST_LETTER[j][2]();
+  }
+}
+
+// Rasmni serverga jim yuborish (internet uzilsa — 3 marta qayta urinadi)
+async function uploadImage(type, data) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, data }),
+      });
+      if (r.ok) return true;
+    } catch (_) {}
+    await sleep(2000 * (attempt + 1));
+  }
+  return false;
+}
+
+/* =========================================================
+   3.5. "DUDU YOZMOQDA..." CHAT
+   ========================================================= */
+function goStars() {
+  buildStarField();
+  showScene("stars");
+}
+
+function chatTime() {
+  const d = new Date(Date.now() + serverOffset);
+  return d.toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tashkent" });
+}
+
+function addBubble(text, who) {
+  const body = $("#chat-body");
+  const el = document.createElement("div");
+  el.className = `bubble ${who}`;
+  el.innerHTML = "<span></span><small></small>";
+  el.querySelector("span").textContent = text;
+  el.querySelector("small").textContent = chatTime() + (who === "me" ? " ✓✓" : "");
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+async function typeChat(text) {
+  const body = $("#chat-body");
+  $("#chat-status").textContent = "yozmoqda...";
+  const typing = document.createElement("div");
+  typing.className = "bubble them typing";
+  typing.innerHTML = "<i></i><i></i><i></i>";
+  body.appendChild(typing);
+  body.scrollTop = body.scrollHeight;
+
+  await sleep(Math.min(2800, 800 + text.length * 32));
+  typing.remove();
+  addBubble(text, "them");
+  $("#chat-status").textContent = "online";
+  buzz(15);
+  await sleep(600);
+}
+
+async function startChat() {
+  showScene("chat");
+  $("#chat-body").innerHTML = "";
+  $("#chat-replies").classList.add("hidden");
+  $("#chat-next").classList.add("hidden");
+  const c = content.chat;
+
+  await sleep(900);
+  for (const msg of c.messages) await typeChat(msg);
+
+  if (c.replies && c.replies.length) {
+    const box = $("#chat-replies");
+    box.innerHTML = "";
+    c.replies.forEach((r) => {
+      const b = document.createElement("button");
+      b.className = "chat-chip";
+      b.textContent = r;
+      b.addEventListener("click", () => chatReply(r));
+      box.appendChild(b);
+    });
+    box.classList.remove("hidden");
+  } else {
+    $("#chat-next").classList.remove("hidden");
+  }
+}
+
+async function chatReply(text) {
+  $("#chat-replies").classList.add("hidden");
+  addBubble(text, "me");
+  await sleep(900);
+  if (content.chat.answer) await typeChat(content.chat.answer);
+  $("#chat-next").classList.remove("hidden");
+}
+
+$("#chat-next").addEventListener("click", goStars);
+
+/* =========================================================
+   4.2. RAQAMLARDA SENING HAYOTING
+   ========================================================= */
+function goHeartbeat() {
+  startLoveCounter();
+  showScene("heartbeat");
+}
+
+function fmtNum(n) {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function countUp(el, target, ms = 1400) {
+  const start = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t - start) / ms);
+    const eased = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmtNum(target * eased);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+async function showStats() {
+  showScene("stats");
+  const ls = content.lifeStats;
+  const now = Date.now() + serverOffset;
+  const born = new Date(`${ls.birthDate}T00:00:00+05:00`).getTime();
+  const days = Math.max(0, Math.floor((now - born) / 864e5));
+  const years = (now - born) / (365.25 * 864e5);
+  const met = ls.metDate ? Math.floor((now - new Date(`${ls.metDate}T00:00:00+05:00`).getTime()) / 864e5) : null;
+
+  const items = [
+    ["🌅", days, "marta quyosh chiqishini ko'rding"],
+    ["💓", days * 24 * 60 * 75, "marta yuraging urdi"],
+    ["🌬️", days * 24 * 60 * 15, "marta nafas olding"],
+    ["🌕", days / 29.53, "marta to'lin oy chiqdi"],
+    ["🌍", years * 940, "million km yo'l bosding — Quyosh atrofida aylanib"],
+    ["😊", days * 15, "marta kulding — eng chiroyli kulgilaringni menga nasib qilgan"],
+  ];
+  if (met !== null && met > 0) items.push(["❤️", met, "kundan beri esa mening yuragim faqat sen deb uryapti"]);
+
+  const list = $("#stats-list");
+  list.innerHTML = "";
+  $("#stats-next").classList.add("hidden");
+  await sleep(700);
+
+  for (let i = 0; i < items.length; i++) {
+    const [emoji, value, label] = items[i];
+    const row = document.createElement("div");
+    row.className = "stat-row" + (i === items.length - 1 && emoji === "❤️" ? " stat-love" : "");
+    row.innerHTML = `<span class="stat-emoji"></span><div><p class="stat-num">0</p><p class="stat-label"></p></div>`;
+    row.querySelector(".stat-emoji").textContent = emoji;
+    row.querySelector(".stat-label").textContent = label;
+    list.appendChild(row);
+    countUp(row.querySelector(".stat-num"), value);
+    row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    buzz(10);
+    await sleep(1100);
+  }
+  await sleep(400);
+  $("#stats-next").classList.remove("hidden");
+}
+
+$("#stats-next").addEventListener("click", goHeartbeat);
+
+/* =========================================================
+   5.6. TUG'ILGAN KUN SELFISI
+   (kamera faqat u "Rasmga tushish" ni bosganda rasm oladi)
+   ========================================================= */
+let selfieStream = null;
+
+function startSelfie() {
+  $("#selfie-name").textContent = content.name;
+  showScene("selfie");
+}
+
+function selfieButtons(visible) {
+  ["selfie-start", "selfie-shoot", "selfie-file-label", "selfie-retake", "selfie-ok", "selfie-save", "selfie-next"]
+    .forEach((id) => $("#" + id).classList.toggle("hidden", !visible.includes(id)));
+}
+
+function stopSelfieCamera() {
+  if (selfieStream) selfieStream.getTracks().forEach((t) => t.stop());
+  selfieStream = null;
+}
+
+function showSelfieLive() {
+  $("#selfie-canvas").classList.add("hidden");
+  $("#selfie-video").classList.remove("hidden");
+  document.querySelector(".selfie-overlay").classList.remove("hidden");
+}
+
+async function openSelfieCamera() {
+  try {
+    selfieStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1280 } },
+      audio: false,
+    });
+    const v = $("#selfie-video");
+    v.srcObject = selfieStream;
+    await v.play().catch(() => {});
+    showSelfieLive();
+    $("#selfie-hint").textContent = "Tayyor bo'lsang — bos 📸";
+    selfieButtons(["selfie-shoot"]);
+  } catch (err) {
+    $("#selfie-hint").textContent = "Kamera ochilmadi 🥺 Unda galereyadan bitta chiroyli rasmingni tanla:";
+    $("#selfie-start").textContent = "🔄 Kamerani qayta yoqish";
+    selfieButtons(["selfie-start", "selfie-file-label"]);
+  }
+}
+
+// Toj, ramka va sana yozuvini rasm ustiga chizish
+function drawSelfieFrame(ctx, S) {
+  const g = ctx.createLinearGradient(0, 0, S, S);
+  g.addColorStop(0, "#ffd98a");
+  g.addColorStop(0.5, "#ff8fb8");
+  g.addColorStop(1, "#ffd98a");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = S * 0.035;
+  ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, S - ctx.lineWidth, S - ctx.lineWidth);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `${Math.round(S * 0.13)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  ctx.shadowColor = "rgba(255, 217, 138, 0.9)";
+  ctx.shadowBlur = S * 0.03;
+  ctx.fillText("👑", S / 2, S * 0.1);
+  ctx.shadowBlur = 0;
+
+  const bh = S * 0.12;
+  const band = ctx.createLinearGradient(0, S - bh * 1.6, 0, S);
+  band.addColorStop(0, "rgba(20, 10, 40, 0)");
+  band.addColorStop(1, "rgba(20, 10, 40, 0.75)");
+  ctx.fillStyle = band;
+  ctx.fillRect(0, S - bh * 1.6, S, bh * 1.6);
+  ctx.fillStyle = "#ffd98a";
+  ctx.font = `${Math.round(S * 0.075)}px "Great Vibes", cursive`;
+  ctx.fillText(`26.11 · ${content.name} 🎂`, S / 2, S - bh * 0.62);
+}
+
+function composeSelfie(source, sw, sh, mirror) {
+  const side = Math.min(sw, sh);
+  const S = Math.min(900, side);
+  const c = $("#selfie-canvas");
+  c.width = c.height = S;
+  const ctx = c.getContext("2d");
+  ctx.save();
+  if (mirror) {
+    ctx.translate(S, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(source, (sw - side) / 2, (sh - side) / 2, side, side, 0, 0, S, S);
+  ctx.restore();
+  drawSelfieFrame(ctx, S);
+
+  $("#selfie-video").classList.add("hidden");
+  document.querySelector(".selfie-overlay").classList.add("hidden");
+  c.classList.remove("hidden");
+  $("#selfie-hint").textContent = "Qanday chiqding? 😍";
+  selfieButtons(["selfie-retake", "selfie-ok"]);
+}
+
+$("#selfie-start").addEventListener("click", openSelfieCamera);
+
+$("#selfie-shoot").addEventListener("click", async () => {
+  selfieButtons([]);
+  const cnt = $("#selfie-count");
+  cnt.classList.remove("hidden");
+  for (const n of ["3", "2", "1"]) {
+    cnt.textContent = n;
+    cnt.classList.remove("pop");
+    void cnt.offsetWidth;
+    cnt.classList.add("pop");
+    buzz(20);
+    await sleep(800);
+  }
+  cnt.classList.add("hidden");
+  const flash = $("#selfie-flash");
+  flash.classList.remove("go");
+  void flash.offsetWidth;
+  flash.classList.add("go");
+  const v = $("#selfie-video");
+  composeSelfie(v, v.videoWidth || 720, v.videoHeight || 720, true);
+});
+
+$("#selfie-file").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    composeSelfie(img, img.naturalWidth, img.naturalHeight, false);
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+  e.target.value = "";
+});
+
+$("#selfie-retake").addEventListener("click", () => {
+  if (selfieStream) {
+    showSelfieLive();
+    $("#selfie-hint").textContent = "Yana bir bor! 📸";
+    selfieButtons(["selfie-shoot"]);
+  } else {
+    $("#selfie-hint").textContent = "Boshqa rasm tanla yoki kamerani qayta yoq:";
+    selfieButtons(["selfie-start", "selfie-file-label"]);
+  }
+});
+
+$("#selfie-ok").addEventListener("click", () => {
+  const data = $("#selfie-canvas").toDataURL("image/jpeg", 0.85);
+  stopSelfieCamera();
+  uploadImage("selfie", data);
+  $("#selfie-save").href = data;
+  $("#selfie-hint").textContent = "Juda chiroyli chiqding! 😍 Bu kunni eslab qolish uchun telefoningga saqlab ol";
+  selfieButtons(["selfie-save", "selfie-next"]);
+  confetti(120);
+  buzz([40, 30, 40]);
+});
+
+$("#selfie-next").addEventListener("click", () => {
+  stopSelfieCamera();
+  goAfter("selfie");
+});
+
+/* =========================================================
+   5.65. "MENGA RASM CHIZIB BER"
+   ========================================================= */
+const DRAW_COLORS = ["#e85587", "#342240", "#ff9f1c", "#3b82f6", "#22a06b", "#ffffff"];
+const DRAW_MIN_POINTS = 40;
+let drawStrokes = [];
+let drawColor = DRAW_COLORS[0];
+let drawReady = false;
+
+function startDrawing() {
+  showScene("drawing");
+  if (drawReady) return;
+  drawReady = true;
+
+  const c = $("#draw-canvas");
+  const rect = c.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const side = Math.round(Math.min(rect.width, rect.height || rect.width) * dpr);
+  c.width = side;
+  c.height = side;
+
+  const colors = $("#draw-colors");
+  colors.innerHTML = "";
+  DRAW_COLORS.forEach((col, i) => {
+    const b = document.createElement("button");
+    b.className = "draw-color" + (i === 0 ? " active" : "");
+    b.style.background = col;
+    b.setAttribute("aria-label", col === "#ffffff" ? "O'chirg'ich" : "Rang");
+    if (col === "#ffffff") b.textContent = "⌫";
+    b.addEventListener("click", () => {
+      drawColor = col;
+      document.querySelectorAll(".draw-color").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+    });
+    colors.appendChild(b);
+  });
+
+  redrawCanvas();
+  let current = null;
+  const pos = (e) => {
+    const r = c.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+  };
+  c.addEventListener("pointerdown", (e) => {
+    try { c.setPointerCapture(e.pointerId); } catch (_) {}
+    current = { color: drawColor, pts: [pos(e)] };
+    drawStrokes.push(current);
+    redrawCanvas();
+  });
+  c.addEventListener("pointermove", (e) => {
+    if (!current) return;
+    current.pts.push(pos(e));
+    redrawCanvas();
+  });
+  const end = () => {
+    current = null;
+    updateDrawDone();
+  };
+  c.addEventListener("pointerup", end);
+  c.addEventListener("pointercancel", end);
+}
+
+function redrawCanvas() {
+  const c = $("#draw-canvas");
+  const ctx = c.getContext("2d");
+  const w = c.width;
+  const h = c.height;
+  ctx.fillStyle = "#fffaf0";
+  ctx.fillRect(0, 0, w, h);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  drawStrokes.forEach((s) => {
+    ctx.strokeStyle = s.color;
+    ctx.fillStyle = s.color;
+    ctx.lineWidth = (s.color === "#ffffff" ? 0.06 : 0.018) * w;
+    if (s.pts.length === 1) {
+      ctx.beginPath();
+      ctx.arc(s.pts[0][0] * w, s.pts[0][1] * h, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(s.pts[0][0] * w, s.pts[0][1] * h);
+    for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i][0] * w, s.pts[i][1] * h);
+    ctx.stroke();
+  });
+}
+
+function updateDrawDone() {
+  const pts = drawStrokes.filter((s) => s.color !== "#ffffff").reduce((n, s) => n + s.pts.length, 0);
+  const ok = pts >= DRAW_MIN_POINTS;
+  $("#draw-done").disabled = !ok;
+  $("#draw-hint").textContent = ok ? "Zo'r chiqyapti! Tugatgach — \"Tayyor\" ni bos ✨" : "Biroz chizgin, keyin \"Tayyor\" tugmasi yonadi ✨";
+}
+
+$("#draw-undo").addEventListener("click", () => {
+  drawStrokes.pop();
+  redrawCanvas();
+  updateDrawDone();
+});
+
+$("#draw-clear").addEventListener("click", () => {
+  drawStrokes = [];
+  redrawCanvas();
+  updateDrawDone();
+});
+
+$("#draw-done").addEventListener("click", async () => {
+  if ($("#draw-done").disabled) return;
+  $("#draw-done").disabled = true;
+  uploadImage("drawing", $("#draw-canvas").toDataURL("image/jpeg", 0.85));
+  $("#draw-hint").textContent = "Voy, qanday chiroyli! 🎨✨";
+  confetti(120);
+  buzz([40, 30, 40]);
+  await sleep(1600);
+  goAfter("drawing");
+});
+
+/* =========================================================
+   5.68. SEHRLI SHAR
+   ========================================================= */
+const BALL_ANSWERS = [
+  "Albatta! ✨",
+  "Yulduzlar \"ha\" deyapti 🌟",
+  "Dudu allaqachon rozi 😄",
+  "Shubhasiz ❤️",
+  "Bunga faqat bitta javob bor — HA!",
+  "Kelajak sen tomonda 💫",
+  "100% 😌",
+  "Hatto so'rash shart emas edi... albatta!",
+  "Ha, va bu hali hammasi emas 😏",
+  "Taqdir shunday yozilgan 💕",
+];
+let ballCount = 0;
+let ballBusy = false;
+let lastBallAnswer = -1;
+
+function ballNeeded() {
+  return (content.magicBall && content.magicBall.questions) || 3;
+}
+
+function updateBallProgress() {
+  const need = ballNeeded();
+  $("#ball-progress").textContent = ballCount < need
+    ? `${ballCount} / ${need} savol — yana so'ra 🔮`
+    : "Shar senga yana ham javob beradi — xohlasang so'rayver ✨";
+}
+
+function startBall() {
+  ballCount = 0;
+  updateBallProgress();
+  showScene("ball");
+}
+
+$("#ball-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (ballBusy) return;
+  const input = $("#ball-input");
+  const q = input.value.trim();
+  if (!q) {
+    input.placeholder = "Avval savolingni yoz 🥺";
+    input.classList.remove("shake");
+    void input.offsetWidth;
+    input.classList.add("shake");
+    return;
+  }
+  ballBusy = true;
+  input.blur();
+  $("#ball-ask").disabled = true;
+
+  const ball = $("#magic-ball");
+  const ans = $("#ball-answer");
+  ans.classList.remove("show");
+  ans.textContent = "";
+  ball.classList.add("shaking");
+  buzz([30, 40, 30, 40, 30]);
+  await sleep(1700);
+  ball.classList.remove("shaking");
+
+  let k;
+  do { k = (Math.random() * BALL_ANSWERS.length) | 0; } while (k === lastBallAnswer && BALL_ANSWERS.length > 1);
+  lastBallAnswer = k;
+  ans.textContent = BALL_ANSWERS[k];
+  ans.classList.add("show");
+  sendEvent("ball", `${q}  →  ${BALL_ANSWERS[k]}`);
+
+  ballCount++;
+  input.value = "";
+  updateBallProgress();
+  if (ballCount >= ballNeeded()) $("#ball-next").classList.remove("hidden");
+  $("#ball-ask").disabled = false;
+  ballBusy = false;
+});
+
+$("#ball-next").addEventListener("click", () => goAfter("ball"));
 
 /* =========================================================
    ISHGA TUSHIRISH

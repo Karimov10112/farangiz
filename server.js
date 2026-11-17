@@ -4,7 +4,9 @@ const fs = require("fs");
 const https = require("https");
 
 const app = express();
-app.use(express.json({ limit: "50kb" }));
+const smallJson = express.json({ limit: "50kb" });
+// Rasm yuklash yo'li o'zining katta cheklovidan foydalanadi
+app.use((req, res, next) => (req.path === "/api/upload" ? next() : smallJson(req, res, next)));
 
 const CONTENT_DIR = path.join(__dirname, "content");
 const store = require("./store");
@@ -142,6 +144,17 @@ app.get("/api/content", (req, res) => {
       ? { photo: "/media/photos/" + encodeURIComponent(c.puzzle.photo), message: String(c.puzzle.message || "") }
       : null,
     meetAt: c.meetAt && !isNaN(new Date(c.meetAt).getTime()) ? c.meetAt : null,
+    chat: c.chat && Array.isArray(c.chat.messages) && c.chat.messages.length
+      ? {
+          messages: c.chat.messages.map(String),
+          replies: (c.chat.replies || []).map(String),
+          answer: String(c.chat.answer || ""),
+        }
+      : null,
+    lifeStats: c.lifeStats && c.lifeStats.birthDate ? c.lifeStats : null,
+    selfie: c.selfie !== false,
+    drawing: c.drawing !== false,
+    magicBall: c.magicBall ? { questions: Math.max(1, Math.min(10, Number(c.magicBall.questions) || 3)) } : null,
   });
 });
 
@@ -161,7 +174,13 @@ const EVENT_TYPES = {
   coupon: "🎟 Kupon ishlatdi",
   quiz: "🧠 Test natijasi",
   progress: "📍 Faollik",
+  ball: "🔮 Sehrli sharga savoli",
+  selfie: "📸 Selfisi",
+  drawing: "🎨 Chizgan rasmi",
 };
+
+// Rasm (selfi, chizilgan rasm) faqat shunday ko'rinishda qabul qilinadi
+const IMAGE_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
 
 async function saveEvent(req, res, type, text) {
   const entry = {
@@ -202,7 +221,7 @@ app.post("/api/event", (req, res) => {
   if (!isUnlocked(c) && type !== "progress") {
     return res.status(403).json({ error: "forbidden" });
   }
-  if (!EVENT_TYPES[type] || type === "reply") {
+  if (!EVENT_TYPES[type] || ["reply", "selfie", "drawing"].includes(type)) {
     return res.status(400).json({ error: "bad_type" });
   }
   const text = String((req.body && req.body.text) || "").trim().slice(0, 500);
@@ -210,6 +229,18 @@ app.post("/api/event", (req, res) => {
     return res.status(400).json({ error: "empty" });
   }
   saveEvent(req, res, type, text);
+});
+
+// Selfi va chizilgan rasm (katta hajmli bo'lgani uchun alohida, 3 MB gacha)
+app.post("/api/upload", express.json({ limit: "3mb" }), (req, res) => {
+  const c = loadConfig();
+  if (!isUnlocked(c)) return res.status(403).json({ error: "forbidden" });
+  const type = String((req.body && req.body.type) || "");
+  const data = String((req.body && req.body.data) || "");
+  if (!["selfie", "drawing"].includes(type) || !IMAGE_RE.test(data) || data.length > 2.5e6) {
+    return res.status(400).json({ error: "bad_image" });
+  }
+  saveEvent(req, res, type, data);
 });
 
 // Javoblarni ko'rish: /admin/replies?key=PAROL
@@ -250,7 +281,10 @@ app.get("/admin/replies", async (req, res) => {
           <span class="badge">#${reversed.length - i} · ${esc(EVENT_TYPES[r.type || "reply"] || "💌 Javob")}</span>
           <span class="time">${fmtTime(r.at)}</span>
         </div>
-        <div class="text">${esc(r.text)}</div>
+        ${(r.type === "selfie" || r.type === "drawing") && IMAGE_RE.test(r.text)
+          ? `<img class="shot" src="${r.text}" alt="">
+             <a class="dl" href="${r.text}" download="${r.type}-${new Date(r.at).getTime()}.jpg">💾 Yuklab olish</a>`
+          : `<div class="text">${esc(r.text)}</div>`}
       </div>
     `).join("")
     : `<div class="empty">Hozircha hech qanday javob kelmadi...</div>`;
@@ -316,6 +350,8 @@ app.get("/admin/replies", async (req, res) => {
     }
     .store-ok { background: rgba(80, 200, 120, 0.12); color: #8fe3a8; }
     .store-warn { background: rgba(255, 107, 139, 0.12); color: #ff9db3; }
+    .shot { display: block; width: 100%; border-radius: 10px; margin-top: 4px; }
+    .dl { display: inline-block; margin-top: 10px; color: #ffd98a; font-size: 0.9rem; }
     .progress {
       background: #140f2d;
       border: 1px solid rgba(142, 197, 255, 0.2);
