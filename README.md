@@ -31,7 +31,8 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 | `finalMessage` | Oxirgi sahifadagi katta sarlavha va matn |
 | `music` | Fon musiqasi fayli nomi (`content/music` papkasiga tashlanadi). Kerak bo'lmasa `null` |
 | `allowReply` | U oxirida sizga javob yoza oladimi (`true` / `false`) |
-| `adminKey` | Javoblarni o'qish sahifasi paroli |
+| `adminKey` | Javoblarni o'qish sahifasi paroli (internetda `ADMIN_KEY` muhit o'zgaruvchisi ishlatiladi) |
+| `telegram` | U javob yozganda xabar Telegramingizga keladi (token serverda saqlanadi, pastga qarang) |
 
 > **Eslatma:** `config.js` faylini o'zgartirgandan keyin sahifani yangilash (F5) kifoya. Serverni qayta ishga tushirish shart emas!
 
@@ -95,4 +96,9 @@ U sayt oxirida sizga javob yozib yuborganida, xabarni quyidagi manzilda o'qiysiz
    - `unlockAt` sanasi va vaqtini to'g'ri belgilang.
    - `adminKey` ni o'zingiz biladigan maxfiy parolga o'zgartiring.
 2. Mikrofon bilan puflash funksiyasi xavfsizlik talablariga ko'ra **HTTPS** protokoli orqali ishlaydi (internetga qo'yilganda yoki localhost da bemalol ishlaydi).
-3. Sayt internetga bepul joylashtirilganda (masalan **Render.com** orqali), servis uxlab qolmasligi uchun belgilangan vaqtdan 5–10 daqiqa oldin linkni bir marta o'zingiz ochib qo'ying.
+3. **Serverga muhit o'zgaruvchilarini qo'ying** (Render → Environment):
+   - `ADMIN_KEY` — javoblar paneli uchun yangi maxfiy parol.
+   - `TELEGRAM_BOT_TOKEN` — Telegramda @BotFather orqali bot yaratib, olingan token.
+   - `TELEGRAM_CHAT_ID` — sizning chat ID (botingizga bir marta /start yozing, so'ng @userinfobot dan ID ni oling).
+   - Muhim: bepul serverda `data/replies.json` server qayta yonganda o'chib ketadi. Telegram sozlansa, javob baribir sizga yetib keladi. Qo'shimcha nusxa Render → Logs bo'limida `💌 YANGI JAVOB` qatorida turadi.
+4. Sayt internetga bepul joylashtirilganda (masalan **Render.com** orqali), servis uxlab qolmasligi uchun belgilangan vaqtdan 5–10 daqiqa oldin linkni bir marta o'zingiz ochib qo'ying.
