@@ -10,13 +10,13 @@ module.exports = {
   // 2. Sayt ochiladigan sana
   unlockAt: "2026-11-26T00:00:00+05:00",
 
-  // 3. Sinov rejimi (Hozir sinab ko'rishingiz uchun ochiq!):
+  // 3. Sinov rejimi: true — darhol ochiladi, false — faqat unlockAt vaqtida
   testMode: false,
 
-  // 4. Tortdagi shamlar soni: 11 ta (11 ta yulduz va rasmlarga moslab)
+  // 4. Tortdagi shamlar soni (1 dan 12 gacha)
   candles: 11,
 
-  // 5. Rasmlar va har bir rasm uchun chin dildan yozilgan sevgi jumlalari (11 ta surat)
+  // 5. Rasmlar va har bir rasm uchun chin dildan yozilgan sevgi jumlalari (15 ta surat)
   photos: [
     {
       file: "photo1.jpg",
@@ -103,8 +103,16 @@ module.exports = {
   // 9. Ruxsat
   allowReply: true,
 
-  // 10. Admin paroli: /admin/replies?key=bubuvadudu
+  // 10. Admin paroli: /admin/replies?key=PAROL
+  //     Internetda serverga ADMIN_KEY muhit o'zgaruvchisini qo'ying — u shu qiymat o'rniga ishlaydi
+  //     (GitHub'da parol ochiq turmasligi uchun). Bu qiymat faqat kompyuterda sinash uchun.
   adminKey: "bubuvadudu",
+
+  // 11. Telegram: u javob yozishi bilan xabar Telegramingizga keladi.
+  //     Token va chat ID ni BU YERGA YOZMANG — serverda muhit o'zgaruvchisi qilib qo'ying:
+  //       TELEGRAM_BOT_TOKEN = @BotFather bergan token
+  //       TELEGRAM_CHAT_ID   = sizning chat ID raqamingiz
+  telegram: { enabled: true },
 
   port: 3000
 };

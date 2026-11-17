@@ -41,18 +41,31 @@ function isUnlocked(c) {
 }
 
 // Telegramga xabar yuborish (ixtiyoriy)
+// Token va chat ID avval server muhit o'zgaruvchilaridan (Render → Environment) olinadi,
+// shunda ular GitHub'da ochiq turmaydi
+function getTelegramSettings(cfg) {
+  const t = cfg.telegram || {};
+  const token = String(process.env.TELEGRAM_BOT_TOKEN || t.botToken || "").trim();
+  const chatId = String(process.env.TELEGRAM_CHAT_ID || t.chatId || "").trim();
+  const enabled = t.enabled !== false && token && chatId;
+  return enabled ? { token, chatId } : null;
+}
+
+function getAdminKey(cfg) {
+  return String(process.env.ADMIN_KEY || cfg.adminKey || "").trim();
+}
+
 function sendTelegramNotification(text, cfg) {
-  if (!cfg.telegram || !cfg.telegram.enabled || !cfg.telegram.botToken || !cfg.telegram.chatId) {
-    return;
-  }
-  const token = cfg.telegram.botToken.trim();
-  const chatId = cfg.telegram.chatId.trim();
-  const msg = `💌 *Yangi javob keldi!*\n\n"${text}"\n\n🕒 _${new Date().toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}_`;
+  const tg = getTelegramSettings(cfg);
+  if (!tg) return;
+  const token = tg.token;
+  const chatId = tg.chatId;
+  // parse_mode ishlatilmaydi: matnda * yoki _ bo'lsa, Telegram xabarni rad etardi
+  const msg = `💌 Yangi javob keldi!\n\n"${text}"\n\n🕒 ${new Date().toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}`;
 
   const payload = JSON.stringify({
     chat_id: chatId,
     text: msg,
-    parse_mode: "Markdown",
   });
 
   const req = https.request({
@@ -64,7 +77,13 @@ function sendTelegramNotification(text, cfg) {
       "Content-Length": Buffer.byteLength(payload),
     },
   }, (res) => {
-    res.on("data", () => {});
+    let body = "";
+    res.on("data", (d) => (body += d));
+    res.on("end", () => {
+      if (res.statusCode !== 200) {
+        console.error("Telegram javobi:", res.statusCode, body);
+      }
+    });
   });
 
   req.on("error", (err) => {
@@ -138,37 +157,41 @@ app.post("/api/reply", (req, res) => {
     list = [];
   }
 
-  list.push({
+  const entry = {
     text,
     at: new Date().toISOString(),
     ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress || "noma'lum",
-  });
+  };
+  list.push(entry);
 
+  // 1) Telegramga darhol yuboriladi — server qayta ishga tushsa ham xabar sizda qoladi
+  sendTelegramNotification(text, c);
+  // 2) Server loglariga ham yoziladi (Render → Logs bo'limida ko'rinadi)
+  console.log("💌 YANGI JAVOB:", JSON.stringify(entry));
+
+  // 3) Faylga saqlanadi (/admin/replies uchun). Yozib bo'lmasa ham, u xato ko'rmasin
   try {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2), "utf8");
-    
-    // Agar Telegram yoqilgan bo'lsa, xabar yuboriladi
-    sendTelegramNotification(text, c);
-
-    res.json({ ok: true });
   } catch (err) {
-    console.error("Javobni yozishda xatolik:", err);
-    res.status(500).json({ error: "save_failed" });
+    console.error("Javobni faylga yozishda xatolik:", err);
   }
+
+  res.json({ ok: true });
 });
 
 // Javoblarni ko'rish: /admin/replies?key=PAROL
 app.get("/admin/replies", (req, res) => {
   const c = loadConfig();
-  if (req.query.key !== c.adminKey) {
+  const adminKey = getAdminKey(c);
+  if (!adminKey || req.query.key !== adminKey) {
     return res.status(401).send(`
       <!doctype html>
       <meta charset="utf-8">
       <title>Kirish taqiqlangan</title>
       <body style="background:#07051a;color:#ff8fb8;font-family:sans-serif;text-align:center;padding:50px;">
         <h2>🔒 Parol noto'g'ri</h2>
-        <p style="color:#aaa;">config.js faylidagi adminKey ni kiriting.</p>
+        <p style="color:#aaa;">To'g'ri parolni kiriting.</p>
       </body>
     `);
   }

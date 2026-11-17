@@ -423,7 +423,28 @@ const musicIcon = $("#music-icon");
 let isAudioMuted = false;
 let musicLoaded = false;
 
+let musicPrefetch = null;
+
+// Musiqani oldindan to'liq yuklab olish (iPhone'da <audio preload> ishlamaydi,
+// shuning uchun fayl fetch orqali xotiraga olinadi — bosilganda darhol chaladi)
+function prefetchMusic() {
+  if (!content || !content.music || musicPrefetch) return musicPrefetch;
+  musicPrefetch = fetch(content.music)
+    .then((r) => (r.ok ? r.blob() : null))
+    .then((blob) => {
+      if (blob && !musicLoaded) {
+        musicAudio.src = URL.createObjectURL(blob);
+        musicAudio.preload = "auto";
+        musicAudio.load();
+        musicLoaded = true;
+      }
+    })
+    .catch(() => {});
+  return musicPrefetch;
+}
+
 function setupAudioSource() {
+  // Oldindan yuklash tugamagan bo'lsa — to'g'ridan-to'g'ri havoladan chalamiz
   if (content && content.music && !musicLoaded) {
     musicAudio.src = content.music;
     musicAudio.preload = "auto";
@@ -564,13 +585,18 @@ async function loadContentAndUnlock() {
   document.title = `✨ ${content.name} ✨`;
   $("#intro-name").textContent = content.name;
 
-  setupAudioSource();
-
-  if (content.photos && content.photos.length) {
-    content.photos.forEach((p) => {
+  // Avval musiqa yuklanadi, rasmlar esa undan keyin (internetni talashmasligi uchun)
+  const preloadPhotos = () => {
+    (content.photos || []).forEach((p) => {
       const img = new Image();
       img.src = p.url;
     });
+  };
+  const musicReady = prefetchMusic();
+  if (musicReady) {
+    Promise.race([musicReady, sleep(6000)]).then(preloadPhotos);
+  } else {
+    preloadPhotos();
   }
 
   showScene("intro");
