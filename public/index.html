@@ -73,6 +73,22 @@
     <button id="to-stars" class="btn ghost hidden">Davom etish →</button>
   </section>
 
+  <!-- 3.5. "Dudu yozmoqda..." chat sahnasi -->
+  <section id="chat" class="scene">
+    <div class="chat-phone">
+      <div class="chat-header">
+        <div class="chat-avatar">🐻</div>
+        <div class="chat-who">
+          <p class="chat-name">Dudu ❤️</p>
+          <p id="chat-status" class="chat-status">online</p>
+        </div>
+      </div>
+      <div id="chat-body" class="chat-body"></div>
+      <div id="chat-replies" class="chat-replies hidden"></div>
+      <button id="chat-next" class="btn glow chat-next hidden">Osmonga qarash ✨</button>
+    </div>
+  </section>
+
   <!-- 4. Yulduzli osmon va polaroid rasmlar -->
   <section id="stars" class="scene">
     <div class="stars-header">
@@ -96,6 +112,16 @@
 
     <button id="form-name" class="btn glow cosmic-btn hidden">✨ Osmonga qara</button>
     <button id="to-heartbeat" class="btn glow hidden">Yuragimni his qil 💓</button>
+  </section>
+
+  <!-- 4.2. Raqamlarda sening hayoting -->
+  <section id="stats" class="scene">
+    <div class="stats-wrap">
+      <p class="small-caps">Raqamlarda</p>
+      <h2 class="script stats-heading">Sening hayoting</h2>
+      <div id="stats-list" class="stats-list"></div>
+      <button id="stats-next" class="btn glow hidden">Yuragimni his qil 💓</button>
+    </div>
   </section>
 
   <!-- Polaroid modal oyna -->
@@ -202,6 +228,71 @@
         <p id="quiz-verdict" class="handwritten quiz-verdict"></p>
         <button id="quiz-next" class="btn glow">Senga sovg'alarim bor 🎁</button>
       </div>
+    </div>
+  </section>
+
+  <!-- 5.6. Tug'ilgan kun selfisi -->
+  <section id="selfie" class="scene">
+    <div class="selfie-wrap">
+      <p class="small-caps">Bugungi kun xotirasi</p>
+      <h2 class="script selfie-heading">Tug'ilgan kun selfisi</h2>
+      <div class="selfie-frame">
+        <video id="selfie-video" class="selfie-video" playsinline autoplay muted></video>
+        <canvas id="selfie-canvas" class="selfie-canvas hidden"></canvas>
+        <div class="selfie-overlay">
+          <span class="selfie-crown">👑</span>
+          <span class="selfie-tag">26.11 · <span id="selfie-name"></span> 🎂</span>
+        </div>
+        <div id="selfie-count" class="selfie-count hidden"></div>
+        <div id="selfie-flash" class="selfie-flash"></div>
+      </div>
+      <p id="selfie-hint" class="sub selfie-hint">Kameraga ruxsat ber va eng chiroyli tabassumingni ko'rsat 😍</p>
+      <div class="selfie-actions">
+        <button id="selfie-start" class="btn glow">📷 Kamerani yoqish</button>
+        <button id="selfie-shoot" class="btn glow hidden">📸 Rasmga tushish</button>
+        <label id="selfie-file-label" class="btn ghost hidden">🖼 Galereyadan tanlash
+          <input id="selfie-file" type="file" accept="image/*" capture="user" hidden />
+        </label>
+        <button id="selfie-retake" class="btn ghost hidden">🔄 Qayta olish</button>
+        <button id="selfie-ok" class="btn glow hidden">Zo'r chiqdi ✨</button>
+        <a id="selfie-save" class="btn ghost hidden" download="tugilgan-kun-selfi.jpg">💾 Telefonga saqlash</a>
+        <button id="selfie-next" class="btn glow hidden">Davom etish →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.65. Menga rasm chizib ber -->
+  <section id="drawing" class="scene">
+    <div class="draw-wrap">
+      <p class="small-caps">Kichkina iltimos</p>
+      <h2 class="script draw-heading">Menga rasm chizib ber</h2>
+      <p class="sub">Nima xohlasang: yurak, meni, o'zingni, ikkimizni... 🎨</p>
+      <canvas id="draw-canvas" class="draw-canvas"></canvas>
+      <div class="draw-tools">
+        <div id="draw-colors" class="draw-colors"></div>
+        <button id="draw-undo" class="draw-tool" aria-label="Orqaga">↶</button>
+        <button id="draw-clear" class="draw-tool" aria-label="Tozalash">🗑</button>
+      </div>
+      <p id="draw-hint" class="draw-hint">Biroz chizgin, keyin "Tayyor" tugmasi yonadi ✨</p>
+      <button id="draw-done" class="btn glow" disabled>Tayyor ✨</button>
+    </div>
+  </section>
+
+  <!-- 5.68. Sehrli shar -->
+  <section id="ball" class="scene">
+    <div class="ball-wrap">
+      <p class="small-caps">Kelajakni bil</p>
+      <h2 class="script ball-heading">Sehrli shar</h2>
+      <p class="sub">Istagan savolingni yoz — shar hammasini biladi 🔮</p>
+      <div id="magic-ball" class="magic-ball">
+        <div class="ball-window"><p id="ball-answer" class="ball-answer">?</p></div>
+      </div>
+      <p id="ball-progress" class="ball-progress"></p>
+      <form id="ball-form" class="ball-form">
+        <input id="ball-input" class="ball-input" maxlength="200" placeholder="Masalan: biz doim birga bo'lamizmi?" autocomplete="off" />
+        <button id="ball-ask" class="btn glow" type="submit">So'rash 🔮</button>
+      </form>
+      <button id="ball-next" class="btn glow hidden">Davom etish →</button>
     </div>
   </section>
 

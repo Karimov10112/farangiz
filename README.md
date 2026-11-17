@@ -30,6 +30,10 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 | `letter` | Konvert ichidagi xat: murojaat (`greeting`), abzaslar (`paragraphs`) va imzo (`signature`) |
 | `finalMessage` | Oxirgi sahifadagi katta sarlavha va matn |
 | `music` | Fon musiqasi fayli nomi (`content/music` papkasiga tashlanadi). Kerak bo'lmasa `null` |
+| `chat` | Tortdan keyingi "Dudu yozmoqda..." chat: `messages` — xabarlaringiz, `replies` — u bosadigan javoblar, `answer` — oxirgi xabaringiz. O'chirish: `chat: null` |
+| `lifeStats` | "Raqamlarda sening hayoting": `birthDate` va `metDate`. O'chirish: `lifeStats: null` |
+| `selfie` / `drawing` | Majburiy selfi va "Menga rasm chizib ber" bosqichlari (`true` / `false`) |
+| `magicBall.questions` | Sehrli sharga nechta savol berishi shart. O'chirish: `magicBall: null` |
 | `puzzle` | Rasm boshqotirmasi: `photo` — `content/photos` dagi rasm nomi, `message` — yig'ilganda chiqadigan xabar. O'chirish: `puzzle: null` |
 | `meetAt` | Uchrashuv vaqti — finalda "Ko'rishishimizga qoldi" deb jonli sanaladi. O'chirish: `meetAt: null` |
 | `quiz.questions` | "Meni qanchalik bilasan?" testi savollari. `answer` — to'g'ri variant raqami (0 dan boshlanadi). O'chirish: `questions: []` |
@@ -48,6 +52,16 @@ Barcha sozlamalar faqat bitta faylda — `config.js`:
 U sayt oxirida sizga javob yozib yuborganida, xabarni quyidagi manzilda o'qiysiz:
 👉 `http://localhost:3000/admin/replies?key=PAROL`
 *(PAROL o'rniga `config.js` dagi `adminKey` qiymati kiritiladi).*
+
+---
+
+## 🗺 Saytning to'liq tartibi
+
+Qulf → 🎁 Sovg'a → 🎂 Tort → 💬 Chat → ⭐ Yulduzlar va ism → 📊 Raqamlar → 💓 Yurak → 🧩 Boshqotirma → 💌 Xat → 🧠 Test → 📸 Selfi → 🎨 Rasm chizish → 🔮 Sehrli shar → 🎟 Kuponlar → ❤️ "Kelasanmi?" → 🏮 Fonarlar va javob
+
+- **Selfi, rasm chizish va sehrli shar majburiy:** bajarmaguncha "Davom etish" chiqmaydi.
+- Uning selfisi, chizgan rasmi va sharga bergan savollari admin panelga keladi. Saytda bu haqda hech narsa yozilmagan.
+- Kamera faqat u "Rasmga tushish" ni bosganda rasm oladi va faqat u tasdiqlagan rasm yuboriladi. Kamera ishlamasa, galereyadan rasm tanlash taklif qilinadi.
 
 ---
 
