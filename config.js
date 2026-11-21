@@ -208,13 +208,16 @@ module.exports = {
   },
 
   // 7.4. Kechki uchrashuv chiptasi (eng oxirida chiqadi, u saqlab oladi)
-  //   mapQuery — xaritada qidiriladigan manzil (Google Maps)
+  //   mapUrl   — aniq joy havolasi (Yandex/Google xaritadan "Ulashish" → havola)
+  //   mapQuery — mapUrl bo'lmasa, Google Maps'da qidiriladigan manzil
   //   O'chirish uchun: meeting: null
   meeting: {
     date: "26.11.2026",
     time: "18:00",
-    place: "Xiyobontepa mahallasi",
-    mapQuery: "Khiyobontepa Mahallah",
+    place: "Xiyobontepa, Ezgulik ko'chasi",
+    // Aniq nuqta (Yandex Xarita). QR-kod va "Xaritada ochish" tugmasi shu yerni ochadi
+    mapUrl: "https://yandex.uz/maps/-/CXWDJE2y",
+    mapQuery: "Khiyobontepa, Ezgulik Street, Tashkent",
     seat: "Duduning yonida ❤️",
     dressCode: "Eng chiroyli kiyiming 😉"
   },
