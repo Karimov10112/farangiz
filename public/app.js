@@ -19,7 +19,7 @@ const SCENE_LABELS = {
   chat: "💬 Shamlarni o'chirdi, chatni o'qiyapti",
   stats: "📊 Ismini ko'rdi, \"Raqamlarda hayoting\"ga o'tdi",
   puzzle: "🧩 Boshqotirmaga o'tdi",
-  selfie: "📸 Selfi bosqichiga o'tdi",
+  selfie: "📸 Fotobudkaga o'tdi",
   drawing: "🎨 Rasm chizish bosqichiga o'tdi",
   ball: "🔮 Sehrli sharga o'tdi",
   letter: "💌 Xatni ochyapti",
@@ -27,6 +27,8 @@ const SCENE_LABELS = {
   coupons: "🎟 Kuponlarga o'tdi",
   final: "❤️ Final sahifaga yetdi",
   lanterns: "🏮 Fonarlar sahifasiga o'tdi",
+  credits: "🎬 Kino titrlarini ko'ryapti",
+  ticket: "🎟 Uchrashuv chiptasini oldi",
 };
 const VISIT_START = Date.now();
 const sentScenes = new Set();
@@ -652,6 +654,8 @@ async function loadContentAndUnlock() {
       $(".gift-label").textContent = "Bos";
       preloadPhotos();
       prepareLetterVoice(); // ovozli xat ham oldindan yuklanib turadi
+      // Fotobudkadagi yuzni aniqlash (4 MB) — boshqa narsalar yuklanib bo'lgach, orqa fonda
+      if (content.selfie) setTimeout(loadFaceDetector, 20000);
     });
   } else {
     preloadPhotos();
@@ -2103,6 +2107,7 @@ $("#wish-btn").addEventListener("click", async () => {
   await sleep(2500);
   $("#secret-btn").classList.remove("hidden");
   if (content.allowReply) $("#reply-form").classList.remove("hidden");
+  if (content.credits || content.meeting) $("#to-credits").classList.remove("hidden");
   setLanternRate(1.2);
 });
 
@@ -2356,14 +2361,70 @@ async function showStats() {
 $("#stats-next").addEventListener("click", goHeartbeat);
 
 /* =========================================================
-   5.6. TUG'ILGAN KUN SELFISI
-   (kamera faqat u "Rasmga tushish" ni bosganda rasm oladi)
+   5.6. TUG'ILGAN KUN FOTOBUDKASI
+   - Yuzni aniqlash: toj / gulchambar / quloqcha / yurak ko'zoynak boshga o'tiradi
+   - Rang filtrlari, jonli konfetti va yurakchalar
+   - 4 kadr (har biridan oldin vazifa) → lenta → polaroid kabi "chiqadi"
+   (kamera faqat u "Boshladik!" ni bosganda rasm oladi)
    ========================================================= */
-let selfieStream = null;
+const BOOTH_SIZE = 540;
+const BOOTH_PROMPTS = ["Kulib tur 😄", "Ko'zingni qis 😉", "O'pich yubor 😘", "Eng jinni yuzing 🤪"];
+const BOOTH_MASKS = [
+  { id: "crown", label: "👑 Toj" },
+  { id: "flowers", label: "🌸 Gulchambar" },
+  { id: "ears", label: "🐰 Quloqcha" },
+  { id: "hearts", label: "💕 Ko'zoynak" },
+  { id: "none", label: "🚫" },
+];
+const BOOTH_COLORS = [
+  { id: "glow", label: "✨ Glow", css: "brightness(1.08) saturate(1.15) contrast(0.95)" },
+  { id: "warm", label: "🌅 Iliq", css: "sepia(0.18) saturate(1.25) brightness(1.04)" },
+  { id: "retro", label: "📼 Retro", css: "sepia(0.45) contrast(0.9) brightness(1.06)" },
+  { id: "bw", label: "🖤 Oq-qora", css: "grayscale(1) contrast(1.1)" },
+  { id: "none", label: "Oddiy", css: "none" },
+];
 
+let selfieStream = null;
+let boothMask = "crown";
+let boothColor = "glow";
+let boothRunning = false;
+let boothShooting = false;
+let boothFrames = [];
+let boothFace = null; // silliqlangan yuz holati (kvadrat koordinatalarda)
+let boothParticles = [];
+let boothCaption = "";
+let boothDone = false;
+
+/* ---------- Yuzni aniqlash (MediaPipe) — orqa fonda oldindan yuklanadi ---------- */
+let faceDetectorPromise = null;
+let faceDetector = null;
+
+function loadFaceDetector() {
+  if (faceDetectorPromise) return faceDetectorPromise;
+  faceDetectorPromise = (async () => {
+    try {
+      const vision = await import("/vendor/mediapipe/vision_bundle.mjs");
+      const files = await vision.FilesetResolver.forVisionTasks("/vendor/mediapipe/wasm");
+      const make = (delegate) => vision.FaceDetector.createFromOptions(files, {
+        baseOptions: { modelAssetPath: "/vendor/mediapipe/face.tflite", delegate },
+        runningMode: "VIDEO",
+        minDetectionConfidence: 0.5,
+      });
+      try { faceDetector = await make("GPU"); } catch (_) { faceDetector = await make("CPU"); }
+    } catch (err) {
+      console.warn("Yuzni aniqlash yuklanmadi — bezaklar standart joyda turadi:", err);
+      faceDetector = null;
+    }
+    return faceDetector;
+  })();
+  return faceDetectorPromise;
+}
+
+/* ---------- Boshlash ---------- */
 function startSelfie() {
-  $("#selfie-name").textContent = content.name;
   showScene("selfie");
+  loadFaceDetector();
+  buildBoothChips();
 }
 
 function selfieButtons(visible) {
@@ -2371,15 +2432,36 @@ function selfieButtons(visible) {
     .forEach((id) => $("#" + id).classList.toggle("hidden", !visible.includes(id)));
 }
 
-function stopSelfieCamera() {
-  if (selfieStream) selfieStream.getTracks().forEach((t) => t.stop());
-  selfieStream = null;
+function buildBoothChips() {
+  const masks = $("#booth-masks");
+  const colors = $("#booth-colors");
+  if (masks.children.length) return;
+  const make = (box, items, getter, setter) => {
+    items.forEach((it) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (getter() === it.id ? " active" : "");
+      b.textContent = it.label;
+      b.addEventListener("click", () => {
+        setter(it.id);
+        box.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        buzz(10);
+      });
+      box.appendChild(b);
+    });
+  };
+  make(masks, BOOTH_MASKS, () => boothMask, (v) => { boothMask = v; });
+  make(colors, BOOTH_COLORS, () => boothColor, (v) => {
+    boothColor = v;
+    $("#booth-view").style.filter = BOOTH_COLORS.find((c) => c.id === v).css;
+  });
+  $("#booth-view").style.filter = BOOTH_COLORS.find((c) => c.id === boothColor).css;
 }
 
-function showSelfieLive() {
-  $("#selfie-canvas").classList.add("hidden");
-  $("#selfie-video").classList.remove("hidden");
-  document.querySelector(".selfie-overlay").classList.remove("hidden");
+function stopSelfieCamera() {
+  boothRunning = false;
+  if (selfieStream) selfieStream.getTracks().forEach((t) => t.stop());
+  selfieStream = null;
 }
 
 async function openSelfieCamera() {
@@ -2391,9 +2473,10 @@ async function openSelfieCamera() {
     const v = $("#selfie-video");
     v.srcObject = selfieStream;
     await v.play().catch(() => {});
-    showSelfieLive();
-    $("#selfie-hint").textContent = "Tayyor bo'lsang — bos 📸";
+    showBoothLive();
+    $("#selfie-hint").textContent = "Bezak va filtrni tanla, keyin — boshladik! 📸";
     selfieButtons(["selfie-shoot"]);
+    startBoothLoop();
   } catch (err) {
     $("#selfie-hint").textContent = "Kamera ochilmadi 🥺 Unda galereyadan bitta chiroyli rasmingni tanla:";
     $("#selfie-start").textContent = "🔄 Kamerani qayta yoqish";
@@ -2401,109 +2484,456 @@ async function openSelfieCamera() {
   }
 }
 
-// Toj, ramka va sana yozuvini rasm ustiga chizish
-function drawSelfieFrame(ctx, S) {
-  const g = ctx.createLinearGradient(0, 0, S, S);
-  g.addColorStop(0, "#ffd98a");
-  g.addColorStop(0.5, "#ff8fb8");
-  g.addColorStop(1, "#ffd98a");
-  ctx.strokeStyle = g;
-  ctx.lineWidth = S * 0.035;
-  ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, S - ctx.lineWidth, S - ctx.lineWidth);
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `${Math.round(S * 0.13)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-  ctx.shadowColor = "rgba(255, 217, 138, 0.9)";
-  ctx.shadowBlur = S * 0.03;
-  ctx.fillText("👑", S / 2, S * 0.1);
-  ctx.shadowBlur = 0;
-
-  const bh = S * 0.12;
-  const band = ctx.createLinearGradient(0, S - bh * 1.6, 0, S);
-  band.addColorStop(0, "rgba(20, 10, 40, 0)");
-  band.addColorStop(1, "rgba(20, 10, 40, 0.75)");
-  ctx.fillStyle = band;
-  ctx.fillRect(0, S - bh * 1.6, S, bh * 1.6);
-  ctx.fillStyle = "#ffd98a";
-  ctx.font = `${Math.round(S * 0.075)}px "Great Vibes", cursive`;
-  ctx.fillText(`26.11 · ${content.name} 🎂`, S / 2, S - bh * 0.62);
+function showBoothLive() {
+  boothDone = false;
+  $("#booth-placeholder").classList.add("hidden");
+  $("#booth-live").classList.remove("hidden");
+  $("#booth-filters").classList.remove("hidden");
+  $("#booth-print").classList.add("hidden");
+  $("#booth-caption").classList.add("hidden");
+  $("#booth-thumbs").classList.add("hidden");
+  $("#booth-thumbs").innerHTML = "";
+  boothFrames = [];
 }
 
-function composeSelfie(source, sw, sh, mirror) {
-  const side = Math.min(sw, sh);
-  const S = Math.min(900, side);
-  const c = $("#selfie-canvas");
-  c.width = c.height = S;
+/* ---------- Jonli ko'rinish: kamera + yuz + bezak + effektlar ---------- */
+function videoSquare(v) {
+  const vw = v.videoWidth || 720;
+  const vh = v.videoHeight || 720;
+  const side = Math.min(vw, vh);
+  return { vw, vh, side, sx: (vw - side) / 2, sy: (vh - side) / 2 };
+}
+
+function startBoothLoop() {
+  if (boothRunning) return;
+  boothRunning = true;
+  const v = $("#selfie-video");
+  const view = $("#booth-view");
+  const fx = $("#booth-fx");
+  view.width = view.height = BOOTH_SIZE;
+  fx.width = fx.height = BOOTH_SIZE;
+  const vctx = view.getContext("2d");
+  const fctx2 = fx.getContext("2d");
+  let lastDetect = 0;
+
+  const loop = (now) => {
+    if (!boothRunning) return;
+    if (v.readyState >= 2) {
+      const q = videoSquare(v);
+      // Kamera (oynadagidek teskari)
+      vctx.save();
+      vctx.translate(BOOTH_SIZE, 0);
+      vctx.scale(-1, 1);
+      vctx.drawImage(v, q.sx, q.sy, q.side, q.side, 0, 0, BOOTH_SIZE, BOOTH_SIZE);
+      vctx.restore();
+
+      // Yuzni aniqlash (~15 marta/soniya)
+      if (faceDetector && now - lastDetect > 66) {
+        lastDetect = now;
+        try {
+          const res = faceDetector.detectForVideo(v, now);
+          updateBoothFace(res && res.detections && res.detections[0], q);
+        } catch (_) {}
+      }
+
+      fctx2.clearRect(0, 0, BOOTH_SIZE, BOOTH_SIZE);
+      drawBoothMask(fctx2, BOOTH_SIZE, currentFace());
+      drawBoothParticles(fctx2, BOOTH_SIZE, true);
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+// Aniqlangan yuzni kvadrat va oynadagi koordinatalarga o'tkazamiz, keskin sakramasligi uchun silliqlaymiz
+function updateBoothFace(det, q) {
+  if (!det) {
+    if (boothFace) boothFace.miss = (boothFace.miss || 0) + 1;
+    if (boothFace && boothFace.miss > 12) boothFace = null;
+    return;
+  }
+  const S = BOOTH_SIZE / q.side;
+  const bb = det.boundingBox;
+  const mx = (x) => BOOTH_SIZE - (x - q.sx) * S; // oyna
+  const my = (y) => (y - q.sy) * S;
+  const kp = det.keypoints || [];
+  const eyeA = kp[0] ? { x: mx(kp[0].x * q.vw), y: my(kp[0].y * q.vh) } : null;
+  const eyeB = kp[1] ? { x: mx(kp[1].x * q.vw), y: my(kp[1].y * q.vh) } : null;
+  const left = eyeA && eyeB ? (eyeA.x < eyeB.x ? eyeA : eyeB) : null;
+  const right = eyeA && eyeB ? (eyeA.x < eyeB.x ? eyeB : eyeA) : null;
+  const target = {
+    cx: mx(bb.originX + bb.width / 2),
+    top: my(bb.originY),
+    w: bb.width * S,
+    h: bb.height * S,
+    angle: left && right ? Math.atan2(right.y - left.y, right.x - left.x) : 0,
+    le: left,
+    re: right,
+  };
+  if (!boothFace) {
+    boothFace = target;
+  } else {
+    const k = 0.45;
+    for (const key of ["cx", "top", "w", "h", "angle"]) boothFace[key] += (target[key] - boothFace[key]) * k;
+    if (target.le && boothFace.le) {
+      boothFace.le = { x: boothFace.le.x + (target.le.x - boothFace.le.x) * k, y: boothFace.le.y + (target.le.y - boothFace.le.y) * k };
+      boothFace.re = { x: boothFace.re.x + (target.re.x - boothFace.re.x) * k, y: boothFace.re.y + (target.re.y - boothFace.re.y) * k };
+    } else {
+      boothFace.le = target.le;
+      boothFace.re = target.re;
+    }
+  }
+  boothFace.miss = 0;
+}
+
+// Yuz topilmasa — bezak ramkaning yuqori o'rtasida turadi
+function currentFace() {
+  if (boothFace) return boothFace;
+  const S = BOOTH_SIZE;
+  return { cx: S / 2, top: S * 0.3, w: S * 0.42, h: S * 0.5, angle: 0, le: null, re: null, fallback: true };
+}
+
+const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+
+function drawBoothMask(ctx, S, f) {
+  if (boothMask === "none") return;
+  const scale = S / BOOTH_SIZE;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (boothMask === "crown") {
+    ctx.translate(f.cx * scale, (f.top - f.h * 0.08) * scale);
+    ctx.rotate(f.angle);
+    const size = f.w * 0.95 * scale;
+    ctx.font = `${size}px ${EMOJI_FONT}`;
+    ctx.shadowColor = "rgba(255, 217, 138, 0.9)";
+    ctx.shadowBlur = size * 0.25;
+    ctx.fillText("👑", 0, -size * 0.32);
+  } else if (boothMask === "flowers") {
+    ctx.translate(f.cx * scale, (f.top + f.h * 0.06) * scale);
+    ctx.rotate(f.angle);
+    const flowers = ["🌸", "🌼", "🌺", "🌷", "🌺", "🌼", "🌸"];
+    const r = f.w * 0.62 * scale;
+    const size = f.w * 0.26 * scale;
+    ctx.font = `${size}px ${EMOJI_FONT}`;
+    flowers.forEach((fl, i) => {
+      const a = Math.PI + (Math.PI * (i + 0.5)) / flowers.length;
+      ctx.fillText(fl, Math.cos(a) * r, Math.sin(a) * r * 0.55);
+    });
+  } else if (boothMask === "ears") {
+    ctx.translate(f.cx * scale, f.top * scale);
+    ctx.rotate(f.angle);
+    const w = f.w * scale;
+    [-1, 1].forEach((side) => {
+      ctx.save();
+      ctx.translate(side * w * 0.24, -w * 0.32);
+      ctx.rotate(side * 0.18);
+      ctx.fillStyle = "#fff7fb";
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.lineWidth = w * 0.02;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w * 0.13, w * 0.36, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ffb3cd";
+      ctx.beginPath();
+      ctx.ellipse(0, w * 0.03, w * 0.065, w * 0.26, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+  } else if (boothMask === "hearts") {
+    const le = f.le || { x: f.cx - f.w * 0.2, y: f.top + f.h * 0.38 };
+    const re = f.re || { x: f.cx + f.w * 0.2, y: f.top + f.h * 0.38 };
+    const size = f.w * 0.36 * scale;
+    ctx.font = `${size}px ${EMOJI_FONT}`;
+    ctx.strokeStyle = "#ff4f8b";
+    ctx.lineWidth = Math.max(2, size * 0.07);
+    ctx.beginPath();
+    ctx.moveTo((le.x + size * 0.32 / scale) * scale, le.y * scale);
+    ctx.lineTo((re.x - size * 0.32 / scale) * scale, re.y * scale);
+    ctx.stroke();
+    ctx.fillText("❤️", le.x * scale, le.y * scale);
+    ctx.fillText("❤️", re.x * scale, re.y * scale);
+  }
+  ctx.restore();
+}
+
+// Jonli effektlar: yog'ilib turgan yurakchalar va konfetti (rasmga ham tushadi)
+function drawBoothParticles(ctx, S, advance) {
+  const scale = S / BOOTH_SIZE;
+  if (advance && Math.random() < 0.12 && boothParticles.length < 26) {
+    const heart = Math.random() < 0.55;
+    boothParticles.push({
+      x: Math.random() * BOOTH_SIZE,
+      y: -20,
+      vy: 0.6 + Math.random() * 1.2,
+      vx: (Math.random() - 0.5) * 0.5,
+      rot: Math.random() * 6,
+      vr: (Math.random() - 0.5) * 0.06,
+      size: heart ? 14 + Math.random() * 14 : 5 + Math.random() * 6,
+      heart,
+      ch: ["💖", "💕", "✨", "❤️"][(Math.random() * 4) | 0],
+      color: FX_COLORS[(Math.random() * FX_COLORS.length) | 0],
+    });
+  }
+  boothParticles = boothParticles.filter((p) => p.y < BOOTH_SIZE + 30);
+  for (const p of boothParticles) {
+    if (advance) {
+      p.y += p.vy;
+      p.x += p.vx + Math.sin(p.y / 30) * 0.3;
+      p.rot += p.vr;
+    }
+    ctx.save();
+    ctx.translate(p.x * scale, p.y * scale);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = 0.85;
+    if (p.heart) {
+      ctx.font = `${p.size * scale}px ${EMOJI_FONT}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(p.ch, 0, 0);
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size * scale / 2, -p.size * scale / 3, p.size * scale, p.size * scale * 0.66);
+    }
+    ctx.restore();
+  }
+}
+
+/* ---------- Rang filtrlarini rasmga qo'llash (iPhone'da canvas filter ishlamaydi — qo'lda) ---------- */
+function applyColorFilter(ctx, S, id) {
+  if (id === "none") return;
+  const img = ctx.getImageData(0, 0, S, S);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i], g = d[i + 1], b = d[i + 2];
+    if (id === "glow") {
+      r = r * 1.08; g = g * 1.08; b = b * 1.08;
+      const l = 0.3 * r + 0.59 * g + 0.11 * b;
+      r = l + (r - l) * 1.15; g = l + (g - l) * 1.15; b = l + (b - l) * 1.15;
+      r = 128 + (r - 128) * 0.95; g = 128 + (g - 128) * 0.95; b = 128 + (b - 128) * 0.95;
+    } else if (id === "warm") {
+      r = r * 1.08 + 8; g = g * 1.02 + 3; b = b * 0.9;
+    } else if (id === "retro") {
+      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
+      r = r * 0.55 + sr * 0.45; g = g * 0.55 + sg * 0.45; b = b * 0.55 + sb * 0.45;
+      r = 128 + (r - 128) * 0.9 + 10; g = 128 + (g - 128) * 0.9 + 8; b = 128 + (b - 128) * 0.9 + 4;
+    } else if (id === "bw") {
+      const l = 0.3 * r + 0.59 * g + 0.11 * b;
+      r = g = b = 128 + (l - 128) * 1.1;
+    }
+    d[i] = r; d[i + 1] = g; d[i + 2] = b;
+  }
+  ctx.putImageData(img, 0, 0);
+
+  if (id === "glow") {
+    // Yumshoq nur: xiralashtirilgan nusxani ustiga "screen" qilib qo'yamiz
+    const small = document.createElement("canvas");
+    small.width = small.height = Math.round(S / 10);
+    small.getContext("2d").drawImage(ctx.canvas, 0, 0, small.width, small.height);
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.globalCompositeOperation = "screen";
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(small, 0, 0, S, S);
+    ctx.restore();
+  }
+}
+
+// Bitta kadr: kamera (yoki rasm) + rang filtri + bezak + effektlar
+function captureBoothFrame(source, sx, sy, side, mirror) {
+  const c = document.createElement("canvas");
+  c.width = c.height = BOOTH_SIZE;
   const ctx = c.getContext("2d");
   ctx.save();
   if (mirror) {
-    ctx.translate(S, 0);
+    ctx.translate(BOOTH_SIZE, 0);
     ctx.scale(-1, 1);
   }
-  ctx.drawImage(source, (sw - side) / 2, (sh - side) / 2, side, side, 0, 0, S, S);
+  ctx.drawImage(source, sx, sy, side, side, 0, 0, BOOTH_SIZE, BOOTH_SIZE);
   ctx.restore();
-  drawSelfieFrame(ctx, S);
-
-  $("#selfie-video").classList.add("hidden");
-  document.querySelector(".selfie-overlay").classList.add("hidden");
-  c.classList.remove("hidden");
-  $("#selfie-hint").textContent = "Qanday chiqding? 😍";
-  selfieButtons(["selfie-retake", "selfie-ok"]);
+  applyColorFilter(ctx, BOOTH_SIZE, boothColor);
+  drawBoothMask(ctx, BOOTH_SIZE, currentFace());
+  drawBoothParticles(ctx, BOOTH_SIZE, false);
+  return c;
 }
 
+/* ---------- Fotobudka: 4 kadr ketma-ket ---------- */
 $("#selfie-start").addEventListener("click", openSelfieCamera);
 
 $("#selfie-shoot").addEventListener("click", async () => {
+  if (boothShooting) return;
+  boothShooting = true;
   selfieButtons([]);
+  $("#booth-filters").classList.add("hidden");
+  boothFrames = [];
+  const thumbs = $("#booth-thumbs");
+  thumbs.innerHTML = "";
+  thumbs.classList.remove("hidden");
+  const prompt = $("#booth-prompt");
   const cnt = $("#selfie-count");
-  cnt.classList.remove("hidden");
-  for (const n of ["3", "2", "1"]) {
-    cnt.textContent = n;
-    cnt.classList.remove("pop");
-    void cnt.offsetWidth;
-    cnt.classList.add("pop");
-    buzz(20);
-    await sleep(800);
-  }
-  cnt.classList.add("hidden");
-  const flash = $("#selfie-flash");
-  flash.classList.remove("go");
-  void flash.offsetWidth;
-  flash.classList.add("go");
   const v = $("#selfie-video");
-  composeSelfie(v, v.videoWidth || 720, v.videoHeight || 720, true);
+
+  for (let i = 0; i < BOOTH_PROMPTS.length; i++) {
+    $("#selfie-hint").textContent = `${i + 1} / ${BOOTH_PROMPTS.length}`;
+    prompt.textContent = BOOTH_PROMPTS[i];
+    prompt.classList.remove("hidden", "pop");
+    void prompt.offsetWidth;
+    prompt.classList.add("pop");
+    await sleep(1400);
+    for (const n of ["3", "2", "1"]) {
+      cnt.textContent = n;
+      cnt.classList.remove("hidden", "pop");
+      void cnt.offsetWidth;
+      cnt.classList.add("pop");
+      buzz(20);
+      await sleep(700);
+    }
+    cnt.classList.add("hidden");
+    prompt.classList.add("hidden");
+
+    const flash = $("#selfie-flash");
+    flash.classList.remove("go");
+    void flash.offsetWidth;
+    flash.classList.add("go");
+    buzz(40);
+
+    const q = videoSquare(v);
+    const frame = captureBoothFrame(v, q.sx, q.sy, q.side, true);
+    boothFrames.push(frame);
+    const t = document.createElement("img");
+    t.src = frame.toDataURL("image/jpeg", 0.7);
+    t.className = "booth-thumb";
+    thumbs.appendChild(t);
+    await sleep(700);
+  }
+
+  boothShooting = false;
+  stopSelfieCamera();
+  printBoothStrip();
 });
 
+// Kamera bo'lmasa — galereyadagi bitta rasmdan polaroid
 $("#selfie-file").addEventListener("change", (e) => {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   const img = new Image();
   img.onload = () => {
-    composeSelfie(img, img.naturalWidth, img.naturalHeight, false);
+    buildBoothChips();
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    boothFace = null;
+    boothFrames = [captureBoothFrame(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, false)];
     URL.revokeObjectURL(img.src);
+    printBoothStrip();
   };
   img.src = URL.createObjectURL(file);
   e.target.value = "";
 });
 
-$("#selfie-retake").addEventListener("click", () => {
-  if (selfieStream) {
-    showSelfieLive();
-    $("#selfie-hint").textContent = "Yana bir bor! 📸";
-    selfieButtons(["selfie-shoot"]);
-  } else {
-    $("#selfie-hint").textContent = "Boshqa rasm tanla yoki kamerani qayta yoq:";
-    selfieButtons(["selfie-start", "selfie-file-label"]);
+/* ---------- Lenta: kadrlar + sana + uning izohi ---------- */
+function renderBoothStrip() {
+  const n = boothFrames.length;
+  const W = 620;
+  const pad = 40;
+  const gap = 18;
+  const frameW = W - pad * 2;
+  const head = 80;
+  const foot = 190;
+  const H = head + n * frameW + (n - 1) * gap + foot;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d");
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#fffaf0");
+  bg.addColorStop(1, "#ffeef4");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#c9407a";
+  ctx.font = '600 22px "Montserrat", sans-serif';
+  ctx.fillText(n > 1 ? "✨ TUG'ILGAN KUN FOTOBUDKASI ✨" : "✨ TUG'ILGAN KUN ✨", W / 2, head / 2 + 4);
+
+  boothFrames.forEach((f, i) => {
+    const y = head + i * (frameW + gap);
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.18)";
+    ctx.shadowBlur = 10;
+    ctx.drawImage(f, pad, y, frameW, frameW);
+    ctx.restore();
+  });
+
+  const fy = head + n * frameW + (n - 1) * gap;
+  ctx.fillStyle = "#8c2a52";
+  ctx.font = '64px "Great Vibes", cursive';
+  ctx.fillText(`${content.name} 🎂`, W / 2, fy + 62);
+  ctx.fillStyle = "#a0708a";
+  ctx.font = '500 20px "Montserrat", sans-serif';
+  ctx.fillText("26.11.2026", W / 2, fy + 112);
+  if (boothCaption) {
+    ctx.fillStyle = "#342240";
+    ctx.font = '700 36px "Caveat", cursive';
+    ctx.fillText(boothCaption, W / 2, fy + 158);
   }
+  return c;
+}
+
+function updateBoothStripImage() {
+  $("#booth-strip").src = renderBoothStrip().toDataURL("image/jpeg", 0.88);
+}
+
+async function printBoothStrip() {
+  boothCaption = "";
+  $("#booth-caption").value = "";
+  $("#booth-live").classList.add("hidden");
+  $("#booth-filters").classList.add("hidden");
+  $("#booth-thumbs").classList.add("hidden");
+  updateBoothStripImage();
+
+  // Polaroid kabi: lenta tirqishdan sirg'alib chiqadi va asta "ochiladi"
+  const print = $("#booth-print");
+  print.classList.remove("hidden", "printing");
+  void print.offsetWidth;
+  print.classList.add("printing");
+  $("#selfie-hint").textContent = "Chiqyapti... 🎞";
+  buzz([30, 60, 30, 60, 30]);
+  await sleep(4200);
+
+  confetti(140);
+  $("#selfie-hint").textContent = "Voy, qanday chiroyli chiqding! 😍 Pastiga izoh ham yozib qo'y:";
+  $("#booth-caption").classList.remove("hidden");
+  selfieButtons(["selfie-retake", "selfie-ok"]);
+}
+
+$("#booth-caption").addEventListener("input", (e) => {
+  boothCaption = e.target.value.trim();
+  updateBoothStripImage();
+});
+
+$("#selfie-retake").addEventListener("click", () => {
+  $("#booth-print").classList.add("hidden");
+  $("#booth-caption").classList.add("hidden");
+  boothFrames = [];
+  boothFace = null;
+  $("#selfie-hint").textContent = "Yana bir bor! 📸";
+  $("#booth-live").classList.remove("hidden");
+  openSelfieCamera();
 });
 
 $("#selfie-ok").addEventListener("click", () => {
-  const data = $("#selfie-canvas").toDataURL("image/jpeg", 0.85);
-  stopSelfieCamera();
+  if (boothDone) return;
+  boothDone = true;
+  const data = renderBoothStrip().toDataURL("image/jpeg", 0.85);
   uploadImage("selfie", data);
   $("#selfie-save").href = data;
-  $("#selfie-hint").textContent = "Juda chiroyli chiqding! 😍 Bu kunni eslab qolish uchun telefoningga saqlab ol";
+  $("#booth-caption").classList.add("hidden");
+  $("#selfie-hint").textContent = "Bu kunni eslab qolish uchun telefoningga saqlab ol 💾";
   selfieButtons(["selfie-save", "selfie-next"]);
   confetti(120);
   buzz([40, 30, 40]);
@@ -2709,6 +3139,253 @@ $("#ball-form").addEventListener("submit", async (e) => {
 });
 
 $("#ball-next").addEventListener("click", () => goAfter("ball"));
+
+/* =========================================================
+   8. KINO TITRLARI
+   ========================================================= */
+let creditsRunning = false;
+let creditsFast = false;
+
+function startCredits() {
+  const roll = $("#credits-roll");
+  roll.innerHTML = "";
+  const add = (cls, text) => {
+    const el = document.createElement("p");
+    el.className = cls;
+    el.textContent = text;
+    roll.appendChild(el);
+    return el;
+  };
+
+  add("cr-small", "26-noyabr, 2026");
+  add("cr-title script", "Bir sevgi hikoyasi");
+  add("cr-gap", "");
+
+  const photos = (content.photos || []).map((p) => p.url);
+  (content.credits || []).forEach(([role, who], i) => {
+    const row = document.createElement("div");
+    row.className = "cr-row";
+    const r = document.createElement("p");
+    r.className = "cr-role";
+    r.textContent = role;
+    const w = document.createElement("p");
+    w.className = "cr-who";
+    w.textContent = who.replace("{noTries}", String(noTries || 0));
+    row.append(r, w);
+    roll.appendChild(row);
+    // Har 3 qatordan keyin bitta rasm
+    if (i % 3 === 2 && photos.length) {
+      const img = document.createElement("img");
+      img.className = "cr-photo" + (i % 2 ? " tilt-r" : " tilt-l");
+      img.src = photos[(i / 3) % photos.length | 0];
+      img.alt = "";
+      roll.appendChild(img);
+    }
+  });
+
+  add("cr-gap", "");
+  add("cr-note", "Hech bir yurak zarar ko'rmadi...");
+  add("cr-note", "faqat bittasi butunlay o'g'irlandi ❤️");
+  add("cr-gap", "");
+  add("cr-title script", "Davomi bor...");
+  if (content.meeting) add("cr-small", `Bugun · ${content.meeting.time}`);
+
+  showScene("credits");
+  $("#to-ticket").classList.add("hidden");
+  rollCredits();
+}
+
+function rollCredits() {
+  const roll = $("#credits-roll");
+  const screen = document.querySelector(".credits-screen");
+  let y = screen.clientHeight;
+  let last = performance.now();
+  creditsRunning = true;
+  const step = (now) => {
+    if (!creditsRunning) return;
+    const dt = Math.min(64, now - last);
+    last = now;
+    y -= (creditsFast ? 0.22 : 0.055) * dt; // ~55 px/s, bosib tursa 4 baravar tez
+    // "Davomi bor..." ekran o'rtasiga kelganda to'xtaydi
+    const endY = screen.clientHeight / 2 - roll.scrollHeight + 70;
+    if (y <= endY) {
+      y = endY;
+      creditsRunning = false;
+      roll.style.transform = `translateY(${y}px)`;
+      if (content.meeting) {
+        setTimeout(() => $("#to-ticket").classList.remove("hidden"), 900);
+      }
+      fireworkShow(3);
+      return;
+    }
+    roll.style.transform = `translateY(${y}px)`;
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const creditsScene = $("#credits");
+creditsScene.addEventListener("pointerdown", () => { creditsFast = true; });
+["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
+  creditsScene.addEventListener(ev, () => { creditsFast = false; })
+);
+
+$("#to-credits").addEventListener("click", () => {
+  if (content.credits) startCredits();
+  else if (content.meeting) showTicket();
+});
+
+$("#to-ticket").addEventListener("click", showTicket);
+
+/* =========================================================
+   9. KECHKI UCHRASHUV CHIPTASI
+   ========================================================= */
+function mapUrl(m) {
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(m.mapQuery || m.place);
+}
+
+async function showTicket() {
+  const m = content.meeting;
+  showScene("ticket");
+  try { await document.fonts.ready; } catch (_) {}
+  const data = renderTicket(m).toDataURL("image/jpeg", 0.9);
+  $("#ticket-img").src = data;
+  $("#ticket-save").href = data;
+  $("#ticket-map").href = mapUrl(m);
+  confetti(160);
+  buzz([60, 40, 60]);
+}
+
+function renderTicket(m) {
+  const W = 720;
+  const H = 1180;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d");
+  const stubY = 860; // yirtiladigan chiziq
+
+  // Chipta shakli: yumaloq burchaklar va chetdagi yarim doira kesiklar
+  ctx.save();
+  ctx.beginPath();
+  const r = 36;
+  ctx.moveTo(r, 0);
+  ctx.lineTo(W - r, 0);
+  ctx.quadraticCurveTo(W, 0, W, r);
+  ctx.lineTo(W, stubY - 30);
+  ctx.arc(W, stubY, 30, -Math.PI / 2, Math.PI / 2, true);
+  ctx.lineTo(W, H - r);
+  ctx.quadraticCurveTo(W, H, W - r, H);
+  ctx.lineTo(r, H);
+  ctx.quadraticCurveTo(0, H, 0, H - r);
+  ctx.lineTo(0, stubY + 30);
+  ctx.arc(0, stubY, 30, Math.PI / 2, -Math.PI / 2, true);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.clip();
+
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#2a1352");
+  bg.addColorStop(0.55, "#5a1f5e");
+  bg.addColorStop(1, "#1a0b33");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Yulduzchalar
+  for (let i = 0; i < 90; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 1.8 + 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Oltin hoshiya
+  ctx.strokeStyle = "rgba(255, 217, 138, 0.75)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(22, 22, W - 44, stubY - 50);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffd98a";
+  ctx.font = '600 26px "Montserrat", sans-serif';
+  ctx.fillText("🎟  K I R I S H   C H I P T A S I  🎟", W / 2, 78);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = '108px "Great Vibes", cursive';
+  ctx.shadowColor = "rgba(255, 143, 184, 0.8)";
+  ctx.shadowBlur = 24;
+  ctx.fillText(content.name, W / 2, 190);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#ff8fb8";
+  ctx.font = '500 24px "Montserrat", sans-serif';
+  ctx.fillText("Tug'ilgan kun kechasi · Faqat 1 kishi uchun", W / 2, 272);
+
+  // Ma'lumotlar
+  const rows = [
+    ["SANA", m.date || ""],
+    ["VAQT", m.time || ""],
+    ["JOY", m.place || ""],
+    ["O'RIN", m.seat || ""],
+    ["KIYIM", m.dressCode || ""],
+  ].filter(([, v]) => v);
+  let y = 350;
+  rows.forEach(([k, v]) => {
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255, 217, 138, 0.8)";
+    ctx.font = '600 20px "Montserrat", sans-serif';
+    ctx.fillText(k, 70, y);
+    ctx.fillStyle = "#fff";
+    ctx.font = k === "VAQT" ? '700 52px "Montserrat", sans-serif' : '600 32px "Montserrat", sans-serif';
+    ctx.fillText(v, 70, y + (k === "VAQT" ? 44 : 38));
+    y += k === "VAQT" ? 116 : 96;
+  });
+
+  // Yirtiladigan chiziq
+  ctx.setLineDash([14, 12]);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(44, stubY);
+  ctx.lineTo(W - 44, stubY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pastki qism: QR (xaritaga havola) va raqam
+  const qrSize = 230;
+  const qx = 60;
+  const qy = stubY + 45;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(qx - 12, qy - 12, qrSize + 24, qrSize + 24);
+  if (window.qrcode) {
+    const qr = window.qrcode(0, "M");
+    qr.addData(mapUrl(m));
+    qr.make();
+    const n = qr.getModuleCount();
+    const cell = qrSize / n;
+    ctx.fillStyle = "#2a1352";
+    for (let rr = 0; rr < n; rr++) {
+      for (let cc = 0; cc < n; cc++) {
+        if (qr.isDark(rr, cc)) ctx.fillRect(qx + cc * cell, qy + rr * cell, Math.ceil(cell), Math.ceil(cell));
+      }
+    }
+  }
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffd98a";
+  ctx.font = '600 22px "Montserrat", sans-serif';
+  ctx.fillText("№ 0001", qx + qrSize + 50, qy + 40);
+  ctx.fillStyle = "#fff";
+  ctx.font = '700 34px "Caveat", cursive';
+  ctx.fillText("Kechikma,", qx + qrSize + 50, qy + 100);
+  ctx.fillText("seni kutaman ❤️", qx + qrSize + 50, qy + 145);
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.font = '500 18px "Montserrat", sans-serif';
+  ctx.fillText("QR — joy xaritada", qx + qrSize + 50, qy + 205);
+
+  ctx.restore();
+  return c;
+}
 
 /* =========================================================
    ISHGA TUSHIRISH

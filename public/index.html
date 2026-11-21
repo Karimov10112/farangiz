@@ -231,31 +231,51 @@
     </div>
   </section>
 
-  <!-- 5.6. Tug'ilgan kun selfisi -->
+  <!-- 5.6. Tug'ilgan kun fotobudkasi (4 kadr) -->
   <section id="selfie" class="scene">
     <div class="selfie-wrap">
       <p class="small-caps">Bugungi kun xotirasi</p>
-      <h2 class="script selfie-heading">Tug'ilgan kun selfisi</h2>
-      <div class="selfie-frame">
+      <h2 class="script selfie-heading">Fotobudka</h2>
+
+      <!-- Jonli kamera: video (rang filtri bilan) + ustida toj/effektlar -->
+      <div id="booth-live" class="selfie-frame">
         <video id="selfie-video" class="selfie-video" playsinline autoplay muted></video>
-        <canvas id="selfie-canvas" class="selfie-canvas hidden"></canvas>
-        <div class="selfie-overlay">
-          <span class="selfie-crown">👑</span>
-          <span class="selfie-tag">26.11 · <span id="selfie-name"></span> 🎂</span>
-        </div>
+        <canvas id="booth-view" class="booth-layer"></canvas>
+        <canvas id="booth-fx" class="booth-layer"></canvas>
+        <div id="booth-prompt" class="booth-prompt hidden"></div>
         <div id="selfie-count" class="selfie-count hidden"></div>
         <div id="selfie-flash" class="selfie-flash"></div>
+        <div id="booth-placeholder" class="booth-placeholder">📸</div>
       </div>
-      <p id="selfie-hint" class="sub selfie-hint">Kameraga ruxsat ber va eng chiroyli tabassumingni ko'rsat 😍</p>
+
+      <!-- Olingan kadrlar -->
+      <div id="booth-thumbs" class="booth-thumbs hidden"></div>
+
+      <!-- Filtrlar -->
+      <div id="booth-filters" class="booth-filters hidden">
+        <div id="booth-masks" class="chip-row"></div>
+        <div id="booth-colors" class="chip-row"></div>
+      </div>
+
+      <!-- Tayyor lenta (polaroid kabi "chiqadi") -->
+      <div id="booth-print" class="booth-print hidden">
+        <div class="booth-slot"></div>
+        <div class="booth-paper-clip">
+          <img id="booth-strip" class="booth-strip" alt="Fotobudka lentasi" />
+        </div>
+      </div>
+      <input id="booth-caption" class="booth-caption hidden" maxlength="32" placeholder="Rasmga izoh yoz ✍️" autocomplete="off" />
+
+      <p id="selfie-hint" class="sub selfie-hint">4 ta kadr olamiz — har biridan oldin senga kichik vazifa chiqadi 😄</p>
       <div class="selfie-actions">
         <button id="selfie-start" class="btn glow">📷 Kamerani yoqish</button>
-        <button id="selfie-shoot" class="btn glow hidden">📸 Rasmga tushish</button>
+        <button id="selfie-shoot" class="btn glow hidden">📸 Boshladik!</button>
         <label id="selfie-file-label" class="btn ghost hidden">🖼 Galereyadan tanlash
-          <input id="selfie-file" type="file" accept="image/*" capture="user" hidden />
+          <input id="selfie-file" type="file" accept="image/*" hidden />
         </label>
         <button id="selfie-retake" class="btn ghost hidden">🔄 Qayta olish</button>
         <button id="selfie-ok" class="btn glow hidden">Zo'r chiqdi ✨</button>
-        <a id="selfie-save" class="btn ghost hidden" download="tugilgan-kun-selfi.jpg">💾 Telefonga saqlash</a>
+        <a id="selfie-save" class="btn ghost hidden" download="tugilgan-kun-fotobudka.jpg">💾 Telefonga saqlash</a>
         <button id="selfie-next" class="btn glow hidden">Davom etish →</button>
       </div>
     </div>
@@ -375,6 +395,8 @@
       <!-- Osmonga uchib ketadigan qog'oz samolyotcha -->
       <div id="flying-plane" class="flying-plane hidden">✈️💌</div>
 
+      <button id="to-credits" class="btn glow hidden">🎬 Oxirgi kadr</button>
+
       <div id="reply-done" class="reply-success hidden">
         <span class="heart-icon">💖</span>
         <h3>Yetib keldi ❤️</h3>
@@ -382,6 +404,29 @@
         <p class="reply-again-hint">Yana bir narsa deysanmi?</p>
         <button id="reply-again-btn" class="btn glow" style="margin-top:10px">Yana yozish ✍️</button>
       </div>
+    </div>
+  </section>
+
+  <!-- 8. Kino titrlari -->
+  <section id="credits" class="scene">
+    <div class="credits-screen">
+      <div id="credits-roll" class="credits-roll"></div>
+    </div>
+    <p class="credits-hint">Tezroq ko'rish uchun ekranni bosib tur ⏩</p>
+    <button id="to-ticket" class="btn glow credits-next hidden">🎟 Chiptangni ol</button>
+  </section>
+
+  <!-- 9. Kechki uchrashuv chiptasi -->
+  <section id="ticket" class="scene">
+    <div class="ticket-wrap">
+      <p class="small-caps">Faqat sen uchun</p>
+      <h2 class="script ticket-heading">Sening chipting</h2>
+      <img id="ticket-img" class="ticket-img" alt="Uchrashuv chiptasi" />
+      <div class="ticket-actions">
+        <a id="ticket-save" class="btn glow" download="uchrashuv-chiptasi.jpg">💾 Chiptani saqlash</a>
+        <a id="ticket-map" class="btn ghost" target="_blank" rel="noopener">📍 Xaritada ochish</a>
+      </div>
+      <p class="sub ticket-note">Kechqurun shu chiptani menga ko'rsatasan 😉</p>
     </div>
   </section>
 
@@ -399,6 +444,7 @@
   <!-- Audio element (Kara Sevda) -->
   <audio id="music" loop preload="auto" playsinline webkit-playsinline></audio>
 
+  <script src="/vendor/qrcode/qrcode.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
