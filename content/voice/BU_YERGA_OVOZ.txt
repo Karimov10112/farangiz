@@ -1,0 +1,2 @@
+Bu papkaga xat o'qilgan ovoz faylini "xat.mp3" nomi bilan qo'ying.
+Fayl bo'lsa, xat sizning ovozingizda o'qiladi va yozuv ovozga moslab boradi.

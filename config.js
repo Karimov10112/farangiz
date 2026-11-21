@@ -86,9 +86,14 @@ module.exports = {
     paragraphs: [
       "Bugun sening kuning. Bundan bir necha yil oldin aynan shu kuni dunyoga bir inson keldi va keyinchalik mening butun dunyomga aylandi. Bugun senga shuni aytmoqchiman: sen bor bo'lganing uchun hayotim ancha chiroyliroq.",
       "Oxirgi kunlar ikkimiz uchun ham oson bo'lmadi, bilaman. Gaplashmagan har bir kunim xuddi nimadir yetishmayotgandek o'tdi. Telefonimni qo'limga olib, senga yozgim kelgan paytlar ko'p bo'ldi. Agar biror so'zim yoki ishim bilan ko'nglingni og'ritgan bo'lsam, chin dildan kechir. Seni xafa qilish hech qachon niyatim bo'lmagan.",
-      "Senga sog'lik, xotirjamlik va yuzingdan hech qachon arimaydigan tabassum tilayman. Barcha orzularing birma-bir ushalsin. Men esa shu tabassumning sababi bo'lishni, eng quvonchli kunlaringda ham, eng og'ir damlaringda ham yoningda turishni xohlayman. Tug'ilgan kuning muborak bo'lsin, mening eng qadrli insonim."
+      "Bilasanmi, bu xatni necha marta yozib, o'chirib, qaytadan yozdim. Chunki senga aytmoqchi bo'lgan gaplarim so'zlarga sig'mayapti. Sog'lik tilayman, omad tilayman, hammasini tilayman... lekin aslida bitta narsani xohlayman: sen kulib yurgin. Chunki sen kulganingda, men ham tirikligimni his qilaman. Gaplashmagan kunlarimizda buni juda yaxshi tushundim. Orzularing ushalsin, sevgilim. Faqat bittasini menga qoldir, uni birga ushaltiramiz. Va yana bir gap... bu xatda yozmayman. Uni kechqurun, ko'zingga qarab aytaman. Tayyor tur ❤️ Tug'ilgan kuning muborak. Seni sevaman. Shunchaki sevaman."
     ],
-    signature: "Seni juda sog'ingan inson Dududan ❤️"
+    signature: "Seni juda sog'ingan inson Dududan ❤️",
+
+    // Ovozli xat: xat SIZNING OVOZINGIZDA o'qiladi va yozuv ovozga moslab boradi,
+    // o'qilayotganda fon musiqasi juda pasayadi.
+    // Faylni content/voice/ papkasiga xat.mp3 nomi bilan qo'ying. Fayl bo'lmasa — oddiy yoziladi.
+    voice: "xat.mp3"
   },
 
   // 7. Final

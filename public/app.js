@@ -651,6 +651,7 @@ async function loadContentAndUnlock() {
       gift.classList.remove("loading");
       $(".gift-label").textContent = "Bos";
       preloadPhotos();
+      prepareLetterVoice(); // ovozli xat ham oldindan yuklanib turadi
     });
   } else {
     preloadPhotos();
@@ -1256,12 +1257,137 @@ function startMeetCountdown() {
    5. KONVERT VA XAT
    ========================================================= */
 let isEnvelopeOpened = false;
-let isTypingFastForward = false;
 let isLetterDone = false;
+let letterVoice = null;
+
+/* ---------- Musiqani pasaytirish / qaytarish (ovozli xat paytida) ---------- */
+let musicDucked = false;
+let musicPausedForVoice = false;
+
+// iPhone'da audio balandligini koddan o'zgartirib bo'lmaydi — buni tekshiramiz
+function canChangeVolume() {
+  const before = musicAudio.volume;
+  try {
+    musicAudio.volume = before === 0.5 ? 0.4 : 0.5;
+    const ok = Math.abs(musicAudio.volume - (before === 0.5 ? 0.4 : 0.5)) < 0.01;
+    musicAudio.volume = before;
+    return ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+function fadeMusicTo(target, ms = 900) {
+  const start = musicAudio.volume;
+  const t0 = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / ms);
+    try { musicAudio.volume = start + (target - start) * k; } catch (_) {}
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function duckMusic() {
+  if (musicDucked) return;
+  musicDucked = true;
+  if (canChangeVolume()) {
+    fadeMusicTo(0.06); // juda past — ovoz aniq eshitilsin
+  } else if (!musicAudio.paused) {
+    musicAudio.pause(); // iPhone: pasaytirib bo'lmagani uchun vaqtincha to'xtatamiz
+    musicPausedForVoice = true;
+  }
+}
+
+function restoreMusic() {
+  if (!musicDucked) return;
+  musicDucked = false;
+  if (musicPausedForVoice) {
+    musicPausedForVoice = false;
+    if (!isAudioMuted) musicAudio.play().catch(() => {});
+  } else if (!isAudioMuted) {
+    fadeMusicTo(1, 1500);
+  }
+}
+
+/* ---------- Ovozli xat faylini tayyorlash ---------- */
+// Ovozdagi pauzalar (jimlik oraliqlari) — yozuv faqat gapirilayotganda yuradi
+let letterSilences = null;
+let letterSpeechTotal = 0;
+
+function prepareLetterVoice() {
+  if (letterVoice || !content || !content.letter || !content.letter.voice) return;
+  letterVoice = new Audio(content.letter.voice);
+  letterVoice.preload = "auto";
+  letterVoice.setAttribute("playsinline", "");
+  letterVoice.load();
+  analyzeLetterVoice(content.letter.voice);
+}
+
+// Ovoz faylini tahlil qilib, jimlik joylarini topamiz (-38 dB dan past, 0.25 s dan uzun)
+async function analyzeLetterVoice(url) {
+  try {
+    const buf = await (await fetch(url)).arrayBuffer();
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!Ctx) return;
+    const audio = await new Promise((resolve, reject) => {
+      const ctx = new Ctx(1, 44100, 44100);
+      const pr = ctx.decodeAudioData(buf, resolve, reject);
+      if (pr && pr.then) pr.then(resolve, reject);
+    });
+    const data = audio.getChannelData(0);
+    const rate = audio.sampleRate;
+    const win = Math.round(rate * 0.02);
+    const thr = Math.pow(10, -38 / 20);
+    const silences = [];
+    let runStart = null;
+    for (let i = 0; i < data.length; i += win) {
+      let peak = 0;
+      for (let k = i; k < Math.min(i + win, data.length); k++) {
+        const v = Math.abs(data[k]);
+        if (v > peak) peak = v;
+      }
+      const t = i / rate;
+      if (peak < thr) {
+        if (runStart === null) runStart = t;
+      } else if (runStart !== null) {
+        if (t - runStart >= 0.25) silences.push([runStart, t]);
+        runStart = null;
+      }
+    }
+    if (runStart !== null && audio.duration - runStart >= 0.25) silences.push([runStart, audio.duration]);
+    letterSilences = silences;
+    letterSpeechTotal = speechTimeAt(audio.duration);
+  } catch (err) {
+    console.warn("Ovoz tahlili bo'lmadi, oddiy moslash ishlatiladi:", err);
+  }
+}
+
+// t soniyagacha sof gapirilgan vaqt (pauzalarsiz)
+function speechTimeAt(t) {
+  let s = t;
+  for (const [a, b] of letterSilences || []) {
+    if (t > a) s -= Math.min(t, b) - a;
+  }
+  return Math.max(0, s);
+}
 
 $("#envelope").addEventListener("click", async () => {
   if (isEnvelopeOpened) return;
   isEnvelopeOpened = true;
+
+  // iPhone ovozni faqat bosish paytida ruxsat beradi — shu yerda "qulfini ochib" qo'yamiz
+  prepareLetterVoice();
+  if (letterVoice) {
+    letterVoice.muted = true;
+    letterVoice.play()
+      .then(() => {
+        letterVoice.pause();
+        letterVoice.currentTime = 0;
+        letterVoice.muted = false;
+      })
+      .catch(() => { letterVoice.muted = false; });
+  }
 
   $("#env-hint").classList.add("hidden");
   $("#envelope").classList.add("open");
@@ -1277,64 +1403,156 @@ $("#envelope").addEventListener("click", async () => {
   $("#to-final").classList.remove("hidden");
 });
 
+// Matnni harflarga bo'lamiz. Har harfning "og'irligi" — ovozda shu joyga ketadigan vaqt
+// (tinish belgilarida va abzaslar orasida odam to'xtab oladi)
+function buildLetterTokens(letterData) {
+  const tokens = [];
+  const pushText = (text, target) => {
+    for (const ch of text) {
+      let w = 1;
+      if (".!?".includes(ch)) w = 9;
+      else if (",;:—".includes(ch)) w = 4;
+      tokens.push({ ch, w, target });
+    }
+  };
+  pushText(letterData.greeting || "", "body");
+  tokens.push({ ch: "\n\n", w: 8, target: "body" });
+  (letterData.paragraphs || []).forEach((p) => {
+    pushText(p, "body");
+    tokens.push({ ch: "\n\n", w: 12, target: "body" });
+  });
+  pushText(letterData.signature || "", "sig");
+  return tokens;
+}
+
+// Qog'oz pastga faqat u o'qiyotgan joy (kursor) ko'rinmay qolganda va
+// u o'zi yuqoriga aylantirmagan bo'lsa siljiydi — majburan sakratilmaydi
+let paperUserScrollAt = 0;
+$("#paper").addEventListener("touchmove", () => { paperUserScrollAt = Date.now(); }, { passive: true });
+$("#paper").addEventListener("wheel", () => { paperUserScrollAt = Date.now(); }, { passive: true });
+
+function keepCursorVisible(cursor) {
+  if (Date.now() - paperUserScrollAt < 2500) return;
+  const paper = $("#paper");
+  const pr = paper.getBoundingClientRect();
+  const cr = cursor.getBoundingClientRect();
+  if (cr.bottom > pr.bottom - 40) {
+    paper.scrollTo({ top: paper.scrollTop + (cr.bottom - pr.bottom) + 90, behavior: "smooth" });
+  }
+}
+
 async function typeOutLetter() {
   const textContainer = $("#letter-text");
   textContainer.innerHTML = "";
-  const letterData = content.letter;
-
   const cursor = document.createElement("span");
   cursor.className = "cursor";
   textContainer.appendChild(cursor);
-
-  $("#paper").addEventListener("click", () => {
-    if (isTypingFastForward) return;
-    isTypingFastForward = true;
-    // Xat to'liq chiqqach, u o'qiyotgan joyidan davom etadi (oxiriga sakrab ketmaydi)
-    const keep = $("#paper").scrollTop;
-    requestAnimationFrame(() => { $("#paper").scrollTop = keep; });
-  });
-
-  const lines = [letterData.greeting, "", ...letterData.paragraphs.flatMap((p) => [p, ""])];
-
-  for (let l = 0; l < lines.length; l++) {
-    const line = lines[l];
-    for (let c = 0; c < line.length; c++) {
-      if (isTypingFastForward) {
-        cursor.before(line.slice(c));
-        break;
-      }
-      const char = line[c];
-      cursor.before(char);
-
-      let delay = 35;
-      if (char === "." || char === "!" || char === "?") delay = 350;
-      else if (char === "," || char === ";") delay = 220;
-
-      await sleep(delay);
-      $("#paper").scrollTop = $("#paper").scrollHeight;
-    }
-
-    cursor.before("\n");
-    if (!isTypingFastForward) {
-      await sleep(220);
-    }
-  }
-
   const sigContainer = document.createElement("span");
   sigContainer.className = "sig";
-  cursor.before(sigContainer);
 
-  const sigText = letterData.signature || "";
-  for (let i = 0; i < sigText.length; i++) {
-    sigContainer.textContent += sigText[i];
-    if (!isTypingFastForward) {
-      await sleep(65);
+  const tokens = buildLetterTokens(content.letter);
+  let shown = 0;
+  const reveal = (n) => {
+    while (shown < Math.min(n, tokens.length)) {
+      const t = tokens[shown++];
+      if (t.target === "sig") {
+        if (!sigContainer.isConnected) cursor.before(sigContainer);
+        sigContainer.textContent += t.ch;
+      } else {
+        cursor.before(t.ch);
+      }
+    }
+    keepCursorVisible(cursor);
+  };
+
+  const voiceOk = letterVoice && (await startLetterVoice());
+
+  if (voiceOk) {
+    // Ovozga moslab yozish: ovoz qayerda bo'lsa — matn ham o'sha joyda
+    $(".paper-hint").textContent = "🔊 Ovozimni eshit...";
+    // Pauzalar ma'lum bo'lsa — har bir harf teng (pauzalar ovozning o'zidan olinadi),
+    // aks holda tinish belgilariga qo'shimcha vaqt beriladi
+    const bySpeech = () => !!(letterSilences && letterSpeechTotal > 0);
+    const weightOf = (t) => (bySpeech() ? 1 : t.w);
+    let totalW = 0;
+    let cum = [];
+    const rebuild = () => {
+      totalW = 0;
+      cum = tokens.map((t) => (totalW += weightOf(t)));
+    };
+    rebuild();
+    let usedSpeech = bySpeech();
+    let pausedSince = 0;
+    const result = await new Promise((resolve) => {
+      const tick = () => {
+        if (bySpeech() !== usedSpeech) { usedSpeech = bySpeech(); rebuild(); }
+        const d = letterVoice.duration;
+        let k = 0;
+        if (usedSpeech) {
+          // Matn ovozdan 0.25 s orqada yuradi — tinglayotgandek tabiiy
+          k = Math.min(1, speechTimeAt(Math.max(0, letterVoice.currentTime - 0.25)) / letterSpeechTotal);
+        } else if (d && isFinite(d)) {
+          k = Math.min(1, letterVoice.currentTime / d);
+        }
+        const targetW = k * totalW;
+        let n = shown;
+        while (n < tokens.length && cum[n] <= targetW) n++;
+        reveal(n);
+        if (letterVoice.ended || shown >= tokens.length) return resolve();
+        // Ovoz to'xtab qolsa (qo'ng'iroq va h.k.) — 3 soniyadan keyin yozuv o'zi davom etadi
+        if (letterVoice.paused) {
+          pausedSince = pausedSince || Date.now();
+          if (Date.now() - pausedSince > 3000) return resolve("paused");
+        } else pausedSince = 0;
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+    if (result === "paused") {
+      restoreMusic();
+      while (shown < tokens.length) { reveal(shown + 1); await sleep(35); }
+    }
+    reveal(tokens.length);
+    letterVoice.addEventListener("ended", restoreMusic, { once: true });
+    if (letterVoice.ended || letterVoice.paused) restoreMusic();
+  } else {
+    // Ovoz bo'lmasa — oddiy qo'lda yozilayotgandek (to'xtovsiz, oxirigacha)
+    $(".paper-hint").textContent = "";
+    for (let i = 0; i < tokens.length; i++) {
+      reveal(i + 1);
+      const ch = tokens[i].ch;
+      let delay = tokens[i].target === "sig" ? 65 : 35;
+      if (".!?".includes(ch)) delay = 350;
+      else if (",;".includes(ch)) delay = 220;
+      else if (ch === "\n\n") delay = 440;
+      await sleep(delay);
     }
   }
 
   cursor.remove();
-  if (!isTypingFastForward) $("#paper").scrollTop = $("#paper").scrollHeight;
+  $(".paper-hint").textContent = "";
   isLetterDone = true;
+}
+
+// Ovozli xatni boshlash. Ishlamasa (fayl yuklanmasa yoki telefon ruxsat bermasa) — false
+async function startLetterVoice() {
+  try {
+    if (!isFinite(letterVoice.duration) || !letterVoice.duration) {
+      await Promise.race([
+        new Promise((r) => letterVoice.addEventListener("loadedmetadata", r, { once: true })),
+        sleep(8000),
+      ]);
+    }
+    if (!isFinite(letterVoice.duration) || !letterVoice.duration) return false;
+    letterVoice.currentTime = 0;
+    duckMusic();
+    await letterVoice.play();
+    return true;
+  } catch (err) {
+    console.warn("Ovozli xat ijro etilmadi:", err);
+    restoreMusic();
+    return false;
+  }
 }
 
 /* =========================================================
