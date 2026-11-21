@@ -1311,12 +1311,65 @@ function restoreMusic() {
 }
 
 /* ---------- Ovozli xat faylini tayyorlash ---------- */
+// Ovozdagi pauzalar (jimlik oraliqlari) — yozuv faqat gapirilayotganda yuradi
+let letterSilences = null;
+let letterSpeechTotal = 0;
+
 function prepareLetterVoice() {
   if (letterVoice || !content || !content.letter || !content.letter.voice) return;
   letterVoice = new Audio(content.letter.voice);
   letterVoice.preload = "auto";
   letterVoice.setAttribute("playsinline", "");
   letterVoice.load();
+  analyzeLetterVoice(content.letter.voice);
+}
+
+// Ovoz faylini tahlil qilib, jimlik joylarini topamiz (-38 dB dan past, 0.25 s dan uzun)
+async function analyzeLetterVoice(url) {
+  try {
+    const buf = await (await fetch(url)).arrayBuffer();
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!Ctx) return;
+    const audio = await new Promise((resolve, reject) => {
+      const ctx = new Ctx(1, 44100, 44100);
+      const pr = ctx.decodeAudioData(buf, resolve, reject);
+      if (pr && pr.then) pr.then(resolve, reject);
+    });
+    const data = audio.getChannelData(0);
+    const rate = audio.sampleRate;
+    const win = Math.round(rate * 0.02);
+    const thr = Math.pow(10, -38 / 20);
+    const silences = [];
+    let runStart = null;
+    for (let i = 0; i < data.length; i += win) {
+      let peak = 0;
+      for (let k = i; k < Math.min(i + win, data.length); k++) {
+        const v = Math.abs(data[k]);
+        if (v > peak) peak = v;
+      }
+      const t = i / rate;
+      if (peak < thr) {
+        if (runStart === null) runStart = t;
+      } else if (runStart !== null) {
+        if (t - runStart >= 0.25) silences.push([runStart, t]);
+        runStart = null;
+      }
+    }
+    if (runStart !== null && audio.duration - runStart >= 0.25) silences.push([runStart, audio.duration]);
+    letterSilences = silences;
+    letterSpeechTotal = speechTimeAt(audio.duration);
+  } catch (err) {
+    console.warn("Ovoz tahlili bo'lmadi, oddiy moslash ishlatiladi:", err);
+  }
+}
+
+// t soniyagacha sof gapirilgan vaqt (pauzalarsiz)
+function speechTimeAt(t) {
+  let s = t;
+  for (const [a, b] of letterSilences || []) {
+    if (t > a) s -= Math.min(t, b) - a;
+  }
+  return Math.max(0, s);
 }
 
 $("#envelope").addEventListener("click", async () => {
@@ -1417,14 +1470,30 @@ async function typeOutLetter() {
   if (voiceOk) {
     // Ovozga moslab yozish: ovoz qayerda bo'lsa — matn ham o'sha joyda
     $(".paper-hint").textContent = "🔊 Ovozimni eshit...";
-    const totalW = tokens.reduce((s, t) => s + t.w, 0);
-    const cum = [];
-    tokens.reduce((s, t, i) => (cum[i] = s + t.w), 0);
+    // Pauzalar ma'lum bo'lsa — har bir harf teng (pauzalar ovozning o'zidan olinadi),
+    // aks holda tinish belgilariga qo'shimcha vaqt beriladi
+    const bySpeech = () => !!(letterSilences && letterSpeechTotal > 0);
+    const weightOf = (t) => (bySpeech() ? 1 : t.w);
+    let totalW = 0;
+    let cum = [];
+    const rebuild = () => {
+      totalW = 0;
+      cum = tokens.map((t) => (totalW += weightOf(t)));
+    };
+    rebuild();
+    let usedSpeech = bySpeech();
     let pausedSince = 0;
     const result = await new Promise((resolve) => {
       const tick = () => {
+        if (bySpeech() !== usedSpeech) { usedSpeech = bySpeech(); rebuild(); }
         const d = letterVoice.duration;
-        const k = d && isFinite(d) ? Math.min(1, letterVoice.currentTime / d) : 0;
+        let k = 0;
+        if (usedSpeech) {
+          // Matn ovozdan 0.25 s orqada yuradi — tinglayotgandek tabiiy
+          k = Math.min(1, speechTimeAt(Math.max(0, letterVoice.currentTime - 0.25)) / letterSpeechTotal);
+        } else if (d && isFinite(d)) {
+          k = Math.min(1, letterVoice.currentTime / d);
+        }
         const targetW = k * totalW;
         let n = shown;
         while (n < tokens.length && cum[n] <= targetW) n++;
