@@ -2358,3 +2358,184 @@ input, textarea {
   .draw-color { width: 28px; height: 28px; }
   .draw-tool { width: 32px; height: 32px; font-size: 1rem; }
 }
+
+/* =========================================================
+   5.6. FOTOBUDKA
+   ========================================================= */
+#selfie .selfie-frame {
+  width: min(80vw, 330px, 42vh);
+  flex-shrink: 0;
+}
+
+/* Video faqat manba — ko'rinadigani canvas (iPhone'da display:none video kadr bermaydi) */
+#selfie .selfie-video {
+  opacity: 0;
+  transform: none;
+}
+
+.booth-layer {
+  /* Umumiy "canvas { position: fixed }" qoidasini bekor qilish */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.booth-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.booth-prompt {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #fff;
+  background: rgba(232, 85, 135, 0.85);
+  box-shadow: 0 6px 20px rgba(232, 85, 135, 0.5);
+  z-index: 3;
+}
+
+.booth-prompt.pop { animation: promptPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.5) both; }
+
+@keyframes promptPop {
+  from { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+#selfie .selfie-count { z-index: 3; }
+#selfie .selfie-flash { z-index: 4; }
+
+.booth-thumbs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  min-height: 58px;
+}
+
+.booth-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  animation: bubbleIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.booth-filters {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 4px 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip-row::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  font: 500 0.85rem "Montserrat", sans-serif;
+  color: #fff;
+  padding: 7px 13px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip.active {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(255, 143, 184, 0.45), rgba(255, 217, 138, 0.35));
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+/* Lenta chiqish joyi (fotobudka "printeri") */
+.booth-print {
+  position: relative;
+  width: min(62vw, 250px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.booth-slot {
+  width: 112%;
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #05030f, #2a2150);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
+
+.booth-paper-clip {
+  width: 100%;
+  max-height: 52vh;
+  overflow-y: auto;
+  margin-top: -6px;
+  border-radius: 0 0 10px 10px;
+  scrollbar-width: none;
+}
+
+.booth-strip {
+  display: block;
+  width: 100%;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.55);
+}
+
+.booth-print.printing .booth-strip {
+  animation:
+    stripSlide 2.4s cubic-bezier(0.25, 0.8, 0.3, 1) both,
+    stripDevelop 4.2s ease-out both;
+}
+
+@keyframes stripSlide {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* Polaroid kabi: avval oqarib turadi, keyin rasm asta paydo bo'ladi */
+@keyframes stripDevelop {
+  0%, 40% { filter: brightness(1.9) sepia(0.6) blur(2px) contrast(0.6); }
+  100% { filter: none; }
+}
+
+.booth-caption {
+  width: min(80vw, 300px);
+  text-align: center;
+  font: 700 1.35rem "Caveat", cursive;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 217, 138, 0.5);
+  border-radius: 14px;
+  padding: 8px 12px;
+  outline: none;
+  animation: fadeUp 0.6s ease both;
+}
+
+.booth-caption:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px var(--gold-glow);
+}
+
+#selfie .selfie-heading { font-size: clamp(2rem, 9vw, 2.6rem); }
+#selfie .selfie-wrap { gap: 8px; }

@@ -454,6 +454,18 @@ app.post("/admin/clear", async (req, res) => {
   res.redirect("/admin/replies?key=" + encodeURIComponent(req.query.key));
 });
 
+// Yuzni aniqlash (MediaPipe) WASM fayli: 14.6 MB o'rniga gzip bilan siqilgan 4 MB beriladi
+app.get("/vendor/mediapipe/wasm/vision_wasm_internal.wasm", (req, res) => {
+  res.set({
+    "Content-Type": "application/wasm",
+    "Content-Encoding": "gzip",
+    "Cache-Control": "public, max-age=604800",
+    Vary: "Accept-Encoding",
+  });
+  res.sendFile(path.join(__dirname, "public", "vendor", "mediapipe", "wasm", "vision_wasm_internal.wasm.gz"));
+});
+app.use("/vendor", express.static(path.join(__dirname, "public", "vendor"), { maxAge: "7d" }));
+
 // Statik frontend fayllar
 app.use(express.static(path.join(__dirname, "public")));
 
