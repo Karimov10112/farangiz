@@ -207,6 +207,33 @@ module.exports = {
     done: "Bilardim! ❤️ Seni kutaman..."
   },
 
+  // 7.4. Kechki uchrashuv chiptasi (eng oxirida chiqadi, u saqlab oladi)
+  //   mapQuery — xaritada qidiriladigan manzil (Google Maps)
+  //   O'chirish uchun: meeting: null
+  meeting: {
+    date: "26.11.2026",
+    time: "18:00",
+    place: "Xiyobontepa mahallasi",
+    mapQuery: "Khiyobontepa Mahallah",
+    seat: "Duduning yonida ❤️",
+    dressCode: "Eng chiroyli kiyiming 😉"
+  },
+
+  // 7.5. Kino titrlari (fonarlardan keyin, chiptadan oldin). [rol, kim] juftliklari.
+  //   {noTries} — "Yo'q" tugmasini necha marta bosmoqchi bo'lgani bilan almashtiriladi
+  //   O'chirish uchun: credits: null
+  credits: [
+    ["Bosh rolda", "Farangiz"],
+    ["Ikkinchi rolda", "Dudu — uning eng katta muxlisi"],
+    ["Rejissyor", "Sevgi"],
+    ["Ssenariy muallifi", "Taqdir"],
+    ["Operator", "Osmondagi yulduzlar ⭐"],
+    ["Musiqa", "Kara Sevda va yuragimning urishi"],
+    ["Maxsus effektlar", "Uning tabassumi"],
+    ["Kaskadyor", "\"Yo'q\" tugmasi ({noTries} marta qochdi 😄)"],
+    ["Maxsus minnatdorchilik", "5-iyun, 2026 — biz tanishgan kun"]
+  ],
+
   // 8. Musiqa ("Kara Sevda")
   music: "music.mp3",
 

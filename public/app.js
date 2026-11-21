@@ -27,6 +27,8 @@ const SCENE_LABELS = {
   coupons: "🎟 Kuponlarga o'tdi",
   final: "❤️ Final sahifaga yetdi",
   lanterns: "🏮 Fonarlar sahifasiga o'tdi",
+  credits: "🎬 Kino titrlarini ko'ryapti",
+  ticket: "🎟 Uchrashuv chiptasini oldi",
 };
 const VISIT_START = Date.now();
 const sentScenes = new Set();
@@ -2105,6 +2107,7 @@ $("#wish-btn").addEventListener("click", async () => {
   await sleep(2500);
   $("#secret-btn").classList.remove("hidden");
   if (content.allowReply) $("#reply-form").classList.remove("hidden");
+  if (content.credits || content.meeting) $("#to-credits").classList.remove("hidden");
   setLanternRate(1.2);
 });
 
@@ -3136,6 +3139,253 @@ $("#ball-form").addEventListener("submit", async (e) => {
 });
 
 $("#ball-next").addEventListener("click", () => goAfter("ball"));
+
+/* =========================================================
+   8. KINO TITRLARI
+   ========================================================= */
+let creditsRunning = false;
+let creditsFast = false;
+
+function startCredits() {
+  const roll = $("#credits-roll");
+  roll.innerHTML = "";
+  const add = (cls, text) => {
+    const el = document.createElement("p");
+    el.className = cls;
+    el.textContent = text;
+    roll.appendChild(el);
+    return el;
+  };
+
+  add("cr-small", "26-noyabr, 2026");
+  add("cr-title script", "Bir sevgi hikoyasi");
+  add("cr-gap", "");
+
+  const photos = (content.photos || []).map((p) => p.url);
+  (content.credits || []).forEach(([role, who], i) => {
+    const row = document.createElement("div");
+    row.className = "cr-row";
+    const r = document.createElement("p");
+    r.className = "cr-role";
+    r.textContent = role;
+    const w = document.createElement("p");
+    w.className = "cr-who";
+    w.textContent = who.replace("{noTries}", String(noTries || 0));
+    row.append(r, w);
+    roll.appendChild(row);
+    // Har 3 qatordan keyin bitta rasm
+    if (i % 3 === 2 && photos.length) {
+      const img = document.createElement("img");
+      img.className = "cr-photo" + (i % 2 ? " tilt-r" : " tilt-l");
+      img.src = photos[(i / 3) % photos.length | 0];
+      img.alt = "";
+      roll.appendChild(img);
+    }
+  });
+
+  add("cr-gap", "");
+  add("cr-note", "Hech bir yurak zarar ko'rmadi...");
+  add("cr-note", "faqat bittasi butunlay o'g'irlandi ❤️");
+  add("cr-gap", "");
+  add("cr-title script", "Davomi bor...");
+  if (content.meeting) add("cr-small", `Bugun · ${content.meeting.time}`);
+
+  showScene("credits");
+  $("#to-ticket").classList.add("hidden");
+  rollCredits();
+}
+
+function rollCredits() {
+  const roll = $("#credits-roll");
+  const screen = document.querySelector(".credits-screen");
+  let y = screen.clientHeight;
+  let last = performance.now();
+  creditsRunning = true;
+  const step = (now) => {
+    if (!creditsRunning) return;
+    const dt = Math.min(64, now - last);
+    last = now;
+    y -= (creditsFast ? 0.22 : 0.055) * dt; // ~55 px/s, bosib tursa 4 baravar tez
+    // "Davomi bor..." ekran o'rtasiga kelganda to'xtaydi
+    const endY = screen.clientHeight / 2 - roll.scrollHeight + 70;
+    if (y <= endY) {
+      y = endY;
+      creditsRunning = false;
+      roll.style.transform = `translateY(${y}px)`;
+      if (content.meeting) {
+        setTimeout(() => $("#to-ticket").classList.remove("hidden"), 900);
+      }
+      fireworkShow(3);
+      return;
+    }
+    roll.style.transform = `translateY(${y}px)`;
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const creditsScene = $("#credits");
+creditsScene.addEventListener("pointerdown", () => { creditsFast = true; });
+["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
+  creditsScene.addEventListener(ev, () => { creditsFast = false; })
+);
+
+$("#to-credits").addEventListener("click", () => {
+  if (content.credits) startCredits();
+  else if (content.meeting) showTicket();
+});
+
+$("#to-ticket").addEventListener("click", showTicket);
+
+/* =========================================================
+   9. KECHKI UCHRASHUV CHIPTASI
+   ========================================================= */
+function mapUrl(m) {
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(m.mapQuery || m.place);
+}
+
+async function showTicket() {
+  const m = content.meeting;
+  showScene("ticket");
+  try { await document.fonts.ready; } catch (_) {}
+  const data = renderTicket(m).toDataURL("image/jpeg", 0.9);
+  $("#ticket-img").src = data;
+  $("#ticket-save").href = data;
+  $("#ticket-map").href = mapUrl(m);
+  confetti(160);
+  buzz([60, 40, 60]);
+}
+
+function renderTicket(m) {
+  const W = 720;
+  const H = 1180;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d");
+  const stubY = 860; // yirtiladigan chiziq
+
+  // Chipta shakli: yumaloq burchaklar va chetdagi yarim doira kesiklar
+  ctx.save();
+  ctx.beginPath();
+  const r = 36;
+  ctx.moveTo(r, 0);
+  ctx.lineTo(W - r, 0);
+  ctx.quadraticCurveTo(W, 0, W, r);
+  ctx.lineTo(W, stubY - 30);
+  ctx.arc(W, stubY, 30, -Math.PI / 2, Math.PI / 2, true);
+  ctx.lineTo(W, H - r);
+  ctx.quadraticCurveTo(W, H, W - r, H);
+  ctx.lineTo(r, H);
+  ctx.quadraticCurveTo(0, H, 0, H - r);
+  ctx.lineTo(0, stubY + 30);
+  ctx.arc(0, stubY, 30, Math.PI / 2, -Math.PI / 2, true);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.clip();
+
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#2a1352");
+  bg.addColorStop(0.55, "#5a1f5e");
+  bg.addColorStop(1, "#1a0b33");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Yulduzchalar
+  for (let i = 0; i < 90; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 1.8 + 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Oltin hoshiya
+  ctx.strokeStyle = "rgba(255, 217, 138, 0.75)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(22, 22, W - 44, stubY - 50);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffd98a";
+  ctx.font = '600 26px "Montserrat", sans-serif';
+  ctx.fillText("🎟  K I R I S H   C H I P T A S I  🎟", W / 2, 78);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = '108px "Great Vibes", cursive';
+  ctx.shadowColor = "rgba(255, 143, 184, 0.8)";
+  ctx.shadowBlur = 24;
+  ctx.fillText(content.name, W / 2, 190);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#ff8fb8";
+  ctx.font = '500 24px "Montserrat", sans-serif';
+  ctx.fillText("Tug'ilgan kun kechasi · Faqat 1 kishi uchun", W / 2, 272);
+
+  // Ma'lumotlar
+  const rows = [
+    ["SANA", m.date || ""],
+    ["VAQT", m.time || ""],
+    ["JOY", m.place || ""],
+    ["O'RIN", m.seat || ""],
+    ["KIYIM", m.dressCode || ""],
+  ].filter(([, v]) => v);
+  let y = 350;
+  rows.forEach(([k, v]) => {
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255, 217, 138, 0.8)";
+    ctx.font = '600 20px "Montserrat", sans-serif';
+    ctx.fillText(k, 70, y);
+    ctx.fillStyle = "#fff";
+    ctx.font = k === "VAQT" ? '700 52px "Montserrat", sans-serif' : '600 32px "Montserrat", sans-serif';
+    ctx.fillText(v, 70, y + (k === "VAQT" ? 44 : 38));
+    y += k === "VAQT" ? 116 : 96;
+  });
+
+  // Yirtiladigan chiziq
+  ctx.setLineDash([14, 12]);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(44, stubY);
+  ctx.lineTo(W - 44, stubY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pastki qism: QR (xaritaga havola) va raqam
+  const qrSize = 230;
+  const qx = 60;
+  const qy = stubY + 45;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(qx - 12, qy - 12, qrSize + 24, qrSize + 24);
+  if (window.qrcode) {
+    const qr = window.qrcode(0, "M");
+    qr.addData(mapUrl(m));
+    qr.make();
+    const n = qr.getModuleCount();
+    const cell = qrSize / n;
+    ctx.fillStyle = "#2a1352";
+    for (let rr = 0; rr < n; rr++) {
+      for (let cc = 0; cc < n; cc++) {
+        if (qr.isDark(rr, cc)) ctx.fillRect(qx + cc * cell, qy + rr * cell, Math.ceil(cell), Math.ceil(cell));
+      }
+    }
+  }
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffd98a";
+  ctx.font = '600 22px "Montserrat", sans-serif';
+  ctx.fillText("№ 0001", qx + qrSize + 50, qy + 40);
+  ctx.fillStyle = "#fff";
+  ctx.font = '700 34px "Caveat", cursive';
+  ctx.fillText("Kechikma,", qx + qrSize + 50, qy + 100);
+  ctx.fillText("seni kutaman ❤️", qx + qrSize + 50, qy + 145);
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.font = '500 18px "Montserrat", sans-serif';
+  ctx.fillText("QR — joy xaritada", qx + qrSize + 50, qy + 205);
+
+  ctx.restore();
+  return c;
+}
 
 /* =========================================================
    ISHGA TUSHIRISH

@@ -395,6 +395,8 @@
       <!-- Osmonga uchib ketadigan qog'oz samolyotcha -->
       <div id="flying-plane" class="flying-plane hidden">✈️💌</div>
 
+      <button id="to-credits" class="btn glow hidden">🎬 Oxirgi kadr</button>
+
       <div id="reply-done" class="reply-success hidden">
         <span class="heart-icon">💖</span>
         <h3>Yetib keldi ❤️</h3>
@@ -402,6 +404,29 @@
         <p class="reply-again-hint">Yana bir narsa deysanmi?</p>
         <button id="reply-again-btn" class="btn glow" style="margin-top:10px">Yana yozish ✍️</button>
       </div>
+    </div>
+  </section>
+
+  <!-- 8. Kino titrlari -->
+  <section id="credits" class="scene">
+    <div class="credits-screen">
+      <div id="credits-roll" class="credits-roll"></div>
+    </div>
+    <p class="credits-hint">Tezroq ko'rish uchun ekranni bosib tur ⏩</p>
+    <button id="to-ticket" class="btn glow credits-next hidden">🎟 Chiptangni ol</button>
+  </section>
+
+  <!-- 9. Kechki uchrashuv chiptasi -->
+  <section id="ticket" class="scene">
+    <div class="ticket-wrap">
+      <p class="small-caps">Faqat sen uchun</p>
+      <h2 class="script ticket-heading">Sening chipting</h2>
+      <img id="ticket-img" class="ticket-img" alt="Uchrashuv chiptasi" />
+      <div class="ticket-actions">
+        <a id="ticket-save" class="btn glow" download="uchrashuv-chiptasi.jpg">💾 Chiptani saqlash</a>
+        <a id="ticket-map" class="btn ghost" target="_blank" rel="noopener">📍 Xaritada ochish</a>
+      </div>
+      <p class="sub ticket-note">Kechqurun shu chiptani menga ko'rsatasan 😉</p>
     </div>
   </section>
 
@@ -419,6 +444,7 @@
   <!-- Audio element (Kara Sevda) -->
   <audio id="music" loop preload="auto" playsinline webkit-playsinline></audio>
 
+  <script src="/vendor/qrcode/qrcode.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

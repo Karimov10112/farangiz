@@ -160,6 +160,10 @@ app.get("/api/content", (req, res) => {
     lifeStats: c.lifeStats && c.lifeStats.birthDate ? c.lifeStats : null,
     selfie: c.selfie !== false,
     drawing: c.drawing !== false,
+    meeting: c.meeting && c.meeting.place ? c.meeting : null,
+    credits: Array.isArray(c.credits) && c.credits.length
+      ? c.credits.filter((r) => Array.isArray(r) && r.length >= 2).map((r) => [String(r[0]), String(r[1])])
+      : null,
     magicBall: c.magicBall ? { questions: Math.max(1, Math.min(10, Number(c.magicBall.questions) || 3)) } : null,
   });
 });
