@@ -124,7 +124,13 @@ app.get("/api/content", (req, res) => {
       url: "/media/photos/" + encodeURIComponent(p.file),
       text: p.text || "",
     })),
-    letter: c.letter || { greeting: "Azizim,", paragraphs: [], signature: "" },
+    letter: (() => {
+      const l = c.letter || { greeting: "Azizim,", paragraphs: [], signature: "" };
+      // Ovozli xat: content/voice papkasida fayl bo'lsagina yoqiladi
+      const vPath = l.voice ? path.join(CONTENT_DIR, "voice", l.voice) : null;
+      const voice = vPath && fs.existsSync(vPath) ? "/media/voice/" + encodeURIComponent(l.voice) : null;
+      return { greeting: l.greeting, paragraphs: l.paragraphs || [], signature: l.signature || "", voice };
+    })(),
     finalMessage: c.finalMessage || { title: "Tabriklayman!", text: "❤️" },
     music: hasMusic ? "/media/music/" + encodeURIComponent(c.music) : null,
     allowReply: c.allowReply !== false,
