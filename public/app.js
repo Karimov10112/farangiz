@@ -3205,7 +3205,8 @@ function rollCredits() {
     if (!creditsRunning) return;
     const dt = Math.min(64, now - last);
     last = now;
-    y -= (creditsFast ? 0.22 : 0.055) * dt; // ~55 px/s, bosib tursa 4 baravar tez
+    // ~30 px/s — har bir qatorni bemalol o'qishga vaqt yetadi; bosib tursa 5 baravar tez
+    y -= (creditsFast ? 0.15 : 0.03) * dt;
     // "Davomi bor..." ekran o'rtasiga kelganda to'xtaydi
     const endY = screen.clientHeight / 2 - roll.scrollHeight + 70;
     if (y <= endY) {
@@ -3230,12 +3231,32 @@ creditsScene.addEventListener("pointerdown", () => { creditsFast = true; });
   creditsScene.addEventListener(ev, () => { creditsFast = false; })
 );
 
+let ticketSeen = false;
+
 $("#to-credits").addEventListener("click", () => {
+  // Chiptani ko'rib, xabar yozishga qaytgan bo'lsa — to'g'ri chiptaga qaytadi
+  if (ticketSeen && content.meeting) return showTicket();
   if (content.credits) startCredits();
   else if (content.meeting) showTicket();
 });
 
 $("#to-ticket").addEventListener("click", showTicket);
+
+// Chiptadan keyin: yana xabar yozish joyiga qaytish
+$("#ticket-reply").addEventListener("click", () => {
+  showScene("lanterns");
+  $("#wish-box").classList.add("hidden");
+  $("#wish-sent").classList.remove("hidden");
+  $("#secret-btn").classList.remove("hidden");
+  $("#to-credits").classList.remove("hidden");
+  if (content.allowReply) {
+    $("#reply-done").classList.add("hidden");
+    $("#reply-form").classList.remove("hidden");
+    setTimeout(() => {
+      $("#reply-form").scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 400);
+  }
+});
 
 /* =========================================================
    9. KECHKI UCHRASHUV CHIPTASI
@@ -3248,6 +3269,10 @@ function mapUrl(m) {
 async function showTicket() {
   const m = content.meeting;
   showScene("ticket");
+  const firstTime = !ticketSeen;
+  ticketSeen = true;
+  $("#to-credits").textContent = "🎟 Chiptamga qaytish";
+  if (!firstTime && $("#ticket-img").src) return;
   try { await document.fonts.ready; } catch (_) {}
   const data = renderTicket(m).toDataURL("image/jpeg", 0.9);
   $("#ticket-img").src = data;
