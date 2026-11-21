@@ -3241,6 +3241,7 @@ $("#to-ticket").addEventListener("click", showTicket);
    9. KECHKI UCHRASHUV CHIPTASI
    ========================================================= */
 function mapUrl(m) {
+  if (m.mapUrl && /^https:\/\//.test(m.mapUrl)) return m.mapUrl;
   return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(m.mapQuery || m.place);
 }
 
