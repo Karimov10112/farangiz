@@ -425,42 +425,24 @@ class BirthdayBot {
       return;
     }
 
-    // 2. Qaysi xabarni tanlash:
+    // 2. Qaysi xabarni tanlash (Ketma-ket to'liq jadval bo'yicha):
     let msgIndex = (await store.getBotState("msgIndex")) || 0;
     let chosenText = "";
     let replyMarkup = undefined;
     let silent = false;
 
-    // Tungi soatlar (00:00 dan 07:00 gacha) — ovozsiz (uxlayotgan bo'lsa bezovta qilmaslik uchun)
-    if (tashkent.hour >= 0 && tashkent.hour < 7) {
-      silent = true;
-      const nList = messages.nightMessages;
-      chosenText = nList[msgIndex % nList.length];
-    }
-    // Kechki soatlar (19:00 dan 23:00 gacha)
-    else if (tashkent.hour >= 19 && tashkent.hour <= 23) {
-      const eList = messages.eveningMessages;
-      chosenText = eList[msgIndex % eList.length];
-    }
-    // Kunduzgi soatlar (08:00 dan 18:00 gacha)
-    else {
-      // Har 4-xatda interaktiv savol qo'shish
-      if (msgIndex % 4 === 3 && messages.interactiveQuestions.length > 0) {
-        const qIdx = Math.floor(msgIndex / 4) % messages.interactiveQuestions.length;
-        const q = messages.interactiveQuestions[qIdx];
-        chosenText = q.text;
+    if (messages.fullScheduleMessages && messages.fullScheduleMessages.length > 0) {
+      const item = messages.fullScheduleMessages[msgIndex % messages.fullScheduleMessages.length];
+      chosenText = item.text;
+      silent = item.silent === true;
+      if (item.isQuestion && Array.isArray(item.options)) {
         replyMarkup = {
-          inline_keyboard: q.options.map((opt) => [{ text: opt, callback_data: opt }]),
+          inline_keyboard: item.options.map((opt) => [{ text: opt, callback_data: opt }]),
         };
-      } else {
-        const dList = messages.dayMessages;
-        chosenText = dList[msgIndex % dList.length];
       }
-    }
-
-    // Agar so'nggi 3 soat qolgan bo'lsa, maxsus hayajonli xabarlar
-    if (countdown.totalHours <= 3 && messages.finalHoursMessages[countdown.totalHours]) {
-      chosenText = messages.finalHoursMessages[countdown.totalHours];
+    } else {
+      // Zaxira varianti
+      chosenText = "Seni juda sog'indim, Hanuyim ❤️ Har bir soniya sen bilan qadrli.";
     }
 
     // Xabarni shakllantirish
