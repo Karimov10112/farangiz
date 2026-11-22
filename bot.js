@@ -516,4 +516,8 @@ function startBot(config) {
   return activeBot;
 }
 
-module.exports = { BirthdayBot, startBot };
+function checkSchedule() {
+  if (activeBot) return activeBot.checkSchedule();
+}
+
+module.exports = { BirthdayBot, startBot, checkSchedule };

@@ -115,6 +115,14 @@ function sendTelegramNotification(text, cfg, type = "reply") {
   req.end();
 }
 
+// Ping va uyg'otib turish yo'li (cron-job.org orqali Render uxlamasligi uchun)
+app.get("/ping", async (req, res) => {
+  try {
+    if (bot.checkSchedule) await bot.checkSchedule();
+  } catch (_) {}
+  res.json({ ok: true, now: new Date().toISOString() });
+});
+
 // Holat: qolgan vaqt (server vaqti bo'yicha — telefon soatini o'zgartirib aldab bo'lmaydi)
 app.get("/api/status", (req, res) => {
   const c = loadConfig();
