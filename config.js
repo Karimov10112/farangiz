@@ -248,11 +248,14 @@ module.exports = {
   //     (GitHub'da parol ochiq turmasligi uchun). Bu qiymat faqat kompyuterda sinash uchun.
   adminKey: "bubuvadudu",
 
-  // 11. Telegram: u javob yozishi bilan xabar Telegramingizga keladi.
+  // 11. Telegram: bot har soatda xat yuboradi va javoblar Telegramingizga keladi.
   //     Token va chat ID ni BU YERGA YOZMANG — serverda muhit o'zgaruvchisi qilib qo'ying:
   //       TELEGRAM_BOT_TOKEN = @BotFather bergan token
   //       TELEGRAM_CHAT_ID   = sizning chat ID raqamingiz
   telegram: { enabled: true },
+
+  // 12. Sayt havolasi (00:00 da bot Farangizga yuboradigan tugma havolasi)
+  siteUrl: "https://farangiz.onrender.com",
 
   port: 3000
 };

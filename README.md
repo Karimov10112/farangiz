@@ -148,6 +148,25 @@ Admin panelda yashil **"🗄️ Javoblar bazada doimiy saqlanmoqda"** yozuvi chi
 
 ---
 
+## 🤖 Farangiz uchun Telegram Bot (Soatlik xatlar boti)
+
+Saytga ajoyib "kirish" sifatida maxsus Telegram bot qo'shilgan:
+1. **Qanday ishlaydi:**
+   - Farangizga bot havolasini yuborasiz (masalan `t.me/Farangiz_sirli_bot`).
+   - U `/start` bosishi bilan bot uni qutlaydi va tug'ilgan kuniga qadar **har soatda bittadan samimiy xat** yubora boshlaydi (`⏳ 72 soat qoldi...`).
+   - **Tungi soatlarda (00:00 - 07:00):** xatlar ovozsiz (`disable_notification: true`) yetkaziladi — uxlab yotgan bo'lsa uyg'otmaydi.
+   - **26-noyabr 00:00 da:** katta tabrik xati va **"🎁 Sovg'ani ochish"** tugmasi boradi (tugma saytni ochadi!).
+   - Farangiz botga biror narsa yozsa yoki tugmalarni bossa — darhol sizning Telegramingizga keladi.
+
+2. **Admin buyruqlari (O'z Telegramingizdan):**
+   - `/stats` — bot holati, Farangiz kirdimi, nechta xat yetkazildi.
+   - `/send <matn>` — Farangizga o'z nomingizdan to'g'ridan-to'g'ri xabar yuborish.
+   - `/next` — navbatdagi soatlik xatni darhol yuborish (test qilish uchun).
+   - `/test_final` — 00:00 dagi tug'ilgan kun tabrigi va tugmasini sinab ko'rish.
+   - `/pause` va `/resume` — avtomatik yuborishni to'xtatish yoki davom ettirish.
+
+---
+
 ## ⚠️ Internetga joylashdan oldin (Eslatmalar)
 
 1. `config.js` faylida:
