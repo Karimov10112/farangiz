@@ -1,116 +1,113 @@
 // ============================================================
-//  TELEGRAM BOT XABARLARI (Farangiz uchun maxsus)
-//  Har soatda bitta sirli va samimiy xat yuboriladi.
+//  FARANGIZ UCHUN MAXSUS XATLAR (Dududan chin yurakdan)
+//  5-iyun xotiralari, kechalari tonggacha suhbatlar,
+//  sog'inch, pushaymonlik, shirin xotiralar va mehrli so'zlar.
 // ============================================================
 
 const dayMessages = [
-  "Har safar tabassumingni ko'rganimda, butun dunyo to'xtab qolgandek bo'ladi. Bugun ham ko'zguga qarab bir jilmayib qo'y, xo'pmi? ❤️",
-  "Seni sevishimning yana bir sababi: sen hatto oddiy lahzalarni ham unutilmas ertakka aylantira olasan.",
-  "Ko'chalarda yurganimda ham xayolimda faqat sensan. Sening bitta kulging men uchun eng katta quvonch.",
-  "Bilasanmi, sen bilan o'tgan har bir daqiqa — mening hayotimdagi eng qimmatli xotiraga aylanadi.",
-  "Dunyoda milliardlab odamlar bor, lekin faqat sen mening yuragimga shunchalik yaqin bo'la olgansan.",
-  "Bugun kayfiyating a'lo bo'lsin! Sening xursand yurishing — mening eng katta tilagim.",
-  "O'zingni ehtiyot qil, chunki sen kimgadir butun bir dunyosan...",
-  "Hozir nima bilan bandsan bilmayman, lekin bilib qo'y: hozir ham seni kimdir juda qattiq yaxshi ko'radi.",
-  "Qayerda bo'lsang ham, mening qalbim va xayollarim doim sen bilan birga yuradi, Hanuyim.",
-  "Sening ovozing, qarashing va samimiyliging... har safar xuddi birinchi marta sevib qolgandek his qilaman.",
-  "Xafa bo'lishga yoki charchashga haqqing yo'q — chunki oldinda bizni juda ko'p shirin kunlar kutmoqda!",
-  "Seni uchratgan kunim — taqdirim menga bergan eng katta tuhfasi bo'lgan.",
-  "Bilasanmi, sen kulganingda ko'zlaringda chaqnagan o'sha nur butun olamni yoritib yuborishi mumkin.",
-  "Hatto eng oddiy suhbatlarimiz ham mening kunimni eng yorug' kuniga aylantiradi.",
-  "Senga bir sir aytaymi? Sen tasavvur qilganingdan ham ming chandon chiroyliroq va azizroqsan.",
-  "Ko'p narsa kerak emas — shunchaki sening borliging va tabassuming mening baxtim uchun yetarli.",
-  "Har bir yangi kun sen bilan boshlansa, bu hayot yanada go'zalroq tuyuladi.",
-  "Sening erkaliklaring, arazlaring ham mening yuragimga yoqadi — sen har qanday holatda ham betakrorsan.",
-  "Bugun qiyinroq tuyulsa ham tushkunlikka tushma, sen eng kuchli va eng mehribon qizsan!",
-  "Senga qarab to'ymayman deganlari rost ekan... xayolan bo'lsa ham yoningdaman.",
-  "Sening kulging — xuddi bahor yomg'iridek, atrofga faqat hayot va iliqlik bag'ishlaydi.",
-  "Mening erkatoy, shirin va o'jar malikam, bugun ko'proq suv ich va o'zingni asra 😉",
-  "Yurak urishimning har bir zarbasida sening isming jaranglaydi desam ishonasanmi? ❤️",
-  "Ba'zan o'ylab qolaman: sen bo'lmaganingda men qanday yashardim? Xudoga shukurki, sen borsan.",
-  "Bugun shunday chiroyli kiyinib olgansanki, hatto quyosh ham senga havas bilan qarayapti deb o'ylayman.",
-  "Seni har bir xaraktering, har bir nigohing bilan boricha sevaman.",
-  "Orzularing sari intil, men esa senga doim suyanchiq va eng katta muxlising bo'lib qolaman.",
-  "Ko'nglingni hech narsa xira qilmasin, yuzingdan tabassum hech qachon arimasin, sevgilim.",
-  "Seni sevish — bu shunchaki his emas, bu mening eng to'g'ri tanlovim va hayotiy baxtim.",
-  "Yana ozgina sabr qil... juda tez orada eng ajoyib kun boshlanadi! ✨"
+  // 5-iyun va boshlanishi
+  "5-iyun... Aynan shu kuni hayotimga bir farishta kirib kelganini o'shanda hali to'liq anglamagan edim. Sen mening hayotimdagi eng chiroyli kutilmagan mo'jizamsan, Hanuyim ❤️",
+  "Eslaysanmi, boshida kechalari tong otguncha telefonda gaplashib chiqardik... Uyqu kelmasdi, go'shakni qo'ygimiz kelmasdi. O'sha tunlar hozir ham qalbimda eng shirin xotira bo'lib turibdi.",
+  "Boshida: 'Seni shunchaki yaxshi ko'raman, lekin sevmayman' derding-a? 😄 Har safar shu gapingni eslasam, beixtiyor jilmayib qo'yaman. O'jar, erkatoy Bubuyim meni baribir sevib qolgan-ku!",
+  "Sen men uchun hamma narsadan, hammadan voz kechib: 'Faqat sen!' deganingda... Men dunyodagi eng baxtli yigit bo'lgan edim. Sen bergan o'sha mehr dunyolarga arziydi.",
+
+  // Sog'inch va pushaymonlik (tabassum bilan)
+  "Tennis raketkalarini ham, futbol to'plarini ham butunlay yoqib yuborishga tayyorman! 😅 Sening bitta tabassuming, bitta erkalashing oldida dunyodagi barcha tennisu futbollar bir pul!",
+  "30-oktyabrdan beri o'tgan har bir kun menga bitta katta haqiqatni o'rgatdi: Sensiz bu dunyo judayam sovuq va zerikarli ekan. Sening qadring — mening nafasimdek zarur.",
+  "Mening ahmoqligim, tushunmovchiliklar tufayli ko'nglingni og'ritgan har bir soniyam uchun ming bor afsusdaman. Sen xafa bo'lishga emas, faqat malikadek sevilishga loyiqsan.",
+  "Bilasanmi, menda qandli diabet borligini bilib, 'Dudu, siqilmang, asabiylashmang, ovqatingizni vaqtida yeng' deb jon kuydirganing... Seni o'sha g'amxo'rligingsiz yashash qanchalik qiyinligini bilsang edi ❤️",
+
+  // Sevish sabablari va erkalashlar
+  "Sening jahl qilishing ham, arazlab labingni burishtirishing ham dunyodagi eng yoqimtoy manzara. Hozir ham arazlab o'tirgan bo'lsang, bitta jilmayib qo'y, xo'pmi? 😉",
+  "Hozir ko'zguga qarab bitta kulib qo'ygin. Chunki sening kulging — xuddi oftobdek, eng tushkun yurakka ham darhol yorug'lik olib kiradi.",
+  "Dunyoda milliardlab qizlar bor, lekin faqat sen mening yuragimni bunchalik titrata olgansan. Sen mening yakkayu yagona Hanuyimsan.",
+  "Har safar 'Bubuyim' deganingda yuragim qanday erib ketishini bilsang edi... Bu so'zni faqat sendan eshitishni xohlayman.",
+
+  // Samimiy jumlalar
+  "Senga qarab to'ymayman deganlari rost ekan. Hatto gaplashmay turgan kunlarimizda ham har daqiqa xayolimda faqat sening nigohing turdi.",
+  "Men bilgan eng vafodor, eng mehrli va eng oqko'ngil qiz bu — sensan. Sen mening hayotimdagi eng to'g'ri tanlovimsan.",
+  "Xafa bo'lma, sevgilim. Oldimizda hali birga ko'radigan qancha kinolarimiz, birga aylanadigan qancha ko'chalarimiz bor!",
+  "O'zingni ehtiyot qil, kiyinib yur, sovuqda qolib ketma. Chunki sen kimgadir butun bir dunyo, butun bir hayotsan...",
+  "Sening har bir aytgan so'zing, har bir kulging hozir qulog'im ostida jaranglayapti. Seni shunchalik qattiq sog'indimki, so'zlar ojiz.",
+  "Men senga va'da beraman: bundan keyin sening ko'zlaringda faqat quvonch ko'z yoshlari bo'ladi. Xafa qilish degan so'z bizning lug'atimizdan butunlay o'chadi.",
+  "Yana bir oz sabr qil, Hanuyim... Juda oz qoldi. Senga tayyorlagan ssyurprizim sening yuzingga quvonch olib kirishiga ishonaman ✨",
+  "Seni yaxshi ko'rishim shunchaki so'z emas, bu har bir nafasim, har bir yurak urishimdir.",
+  "Bilasanmi, eng katta orzum nima? Har kuni ertalab uyg'onganimda sening jilmayib turganingni ko'rish.",
+  "Sening erkaliklaring, nozlaring... Ularsiz hayotim bo'm-bo'shdek tuyuladi. Seni juda sog'indim, o'jarim ❤️",
+  "Bugun kayfiyating a'lo bo'lsin! Sening xursand yurishing — mening eng katta baxtim.",
+  "Har safar telefonimga qarasam, sendan xabar kutaman. Hali hammasi avvalgidan ham go'zal bo'ladi, ishon.",
+  "Sen mening qalbimning eng sokin, eng toza va eng aziz burchagisan.",
+  "Dudung seni qanchalik sevishini bilasan-a? Bilmasang, har soat kelayotgan mana shu xatlardan bilib ol 😉"
 ];
 
 const eveningMessages = [
-  "Kechki salqin tushdi. Bugungi kuning qanday o'tgan bo'lmasin, barcha charchoqlarni unut — oldinda bayram!",
-  "Kechki choyni ichib, o'zingga dam ber. Sen bugun juda ko'p mehnat qilding va dam olishga munosibsan ❤️",
-  "Kechki osmondagi yulduzlar sen uchun yonayotgandek tuyuladi menga.",
-  "Charchagan bo'lsang ham, jilmayib qo'y. Sening bitta kulging mening butun charchog'imni yuvib ketadi.",
-  "Kechqurunlari sokinlikda faqat sen haqingda o'ylash — kunimning eng sevimli qismi.",
-  "Bugun kechasi orom ol, yaxshilab dam ol, malikam. Har bir soniya bizni o'sha kunga yaqinlashtirmoqda.",
-  "Sening xotirang bilan o'tgan har bir oqshom — dildagi iliqlik demakdir.",
-  "Osmonga qara, eng yorqin yulduz senga mendan salom yetkazadi ✨",
-  "Bugungi kuning uchun o'zingga rahmat ayt va ertaga undan-da go'zal kun bo'lishiga ishon.",
-  "Kechki salqinda sening qo'llaringni ushlab sayr qilishni qanchalik sog'inganimni bilsang edi...",
-  "Hamma narsa o'z vaqtida chiroyli. Bizning eng chiroyli onimiz esa juda-juda yaqin!",
-  "Kuning qanday o'tdi? Umid qilamanki, labingdan tabassum tushmadi 😊",
-  "Ko'zlaringni yumganda yuragingda paydo bo'ladigan iliqlik — bu mening mehrim.",
-  "Kechki payt telefoningga kelgan ushbu xat — senga yaxshi kayfiyat ulashish uchun kichik bir sabab bo'lsin.",
-  "Sen mening har bir oqshomimning eng sokin va eng go'zal xayolisan."
+  "Kechki salqin tushdi... O'tgan kunlarimizdagi kechki uzoq suhbatlarimiz, samimiy orzularimiz yodingdami? Hammasi qalbimda muhrlanib qolgan.",
+  "Kechki issiq choyingni ichib, o'zingga dam ber, Hanuyim. Bugun juda ko'p mehnat qilding va faqat yaxshi narsalarni o'ylashga munosibsan ❤️",
+  "Kechalari sokinlikda faqat sen haqingda o'ylayman. Seni uchratganim uchun har kuni shukr qilaman.",
+  "Osmondagi yulduzlarga qara... Ularning har biri biz gaplashib chiqqan o'sha 5-iyundan keyingi tunlarning guvohi ✨",
+  "Kechqurunlari ko'chada yursam, yoningda sen yetishmayotganing shundoq seziladi. Qo'lingdan ushlab yurishni sog'indim.",
+  "Mening aqlli, chiroyli va qaysar Bubuyim... Bugun barcha charchoqlarni unut, chunki oldinda sening bayraming!",
+  "Sening xotirang bilan o'tgan har bir oqshom — dildagi samimiy iliqlik demakdir.",
+  "30-oktyabrdan keyingi har bir oqshomim sog'inch bilan o'tdi. Lekin bilaman, mehr hamma narsani yengadi.",
+  "Kechki payt ko'zlaringni yumganda dilingda paydo bo'ladigan iliqlik — bu mening senga bo'lgan cheksiz sevgimdir.",
+  "Hamma narsa o'z vaqtida go'zal. Bizning eng chiroyli, eng baxtli kunlarimiz esa hali oldinda, ishonaver ❤️"
 ];
 
 const nightMessages = [
-  "🌙 Tun sokin, hamma uxladi... Sen ham shirin tushlar ko'rib, osoyishta orom ol. Xayrli tun, farishtam.",
-  "🌙 Senga shirin-shirin tushlar tilayman. Tushlaringda faqat eng quvonchli orzularingni ko'rgin.",
-  "🌙 Bu xat jimjitlikda, seni uyg'otmasdan kelyapti. Ertalab uyg'onganingda jilmayib o'qishing uchun...",
-  "🌙 Hamma uxlagan paytda ham, soat millari bizni kutayotgan o'sha sehrli daqiqalarga yaqinlashtirmoqda.",
-  "🌙 Yulduzlar sening oromingni qo'riqlasin. Sen dunyodagi eng go'zal tushlarga loyiqsan.",
-  "🌙 Tun qorong'usi ham sening qalbingdagi yorug'likni to'sa olmaydi. Shirin uyqu tilayman ❤️",
-  "🌙 Qayerda bo'lsang ham, o'zingni xotirjam his qil. Seni juda qadrlaydigan inson bor.",
-  "🌙 Uyquing shirin, tushlaring rangin bo'lsin. Ertaga yana bir ajoyib kun kutmoqda.",
-  "🌙 Osmon to'la yulduz, ammo sen ularning hammasidan go'zalsan. Xayrli orom...",
-  "🌙 Tun sukunati senga huzur va yangi kuch-quvvat bersin. O'zingni ehtiyot qil, Hanuyim.",
-  "🌙 Yostiqqa bosh qo'yganingda dilingdagi barcha xavotirlar yo'qolsin. Sen bilan doim hammasi yaxshi bo'ladi.",
-  "🌙 Bu tunda ham qalbim senga osoyishtalik tilaydi. Ertalabgacha shirin uyqu...",
-  "🌙 Vaqt bir zumga ham to'xtamaydi... Har bir soniya bizni orziqib kutilgan onga yaqinlashtirmoqda.",
-  "🌙 Tun pardasi ostida qoldirilgan eng samimiy mehrim senga hamroh bo'lsin.",
-  "🌙 Shunchaki shirin orom ol... Ertangi kun sen uchun yana bir quvonch olib kelsin."
+  "🌙 Tun sokin, shahar uxladi... Bu xat seni uyg'otmasdan, asta yetib boryapti. Shirin tushlar ko'rgin, farishtam.",
+  "🌙 Senga dunyodagi eng sokin va huzurli uyquni tilayman. Tushlaringda faqat eng yorqin orzularingni ko'r.",
+  "🌙 Qandli diabetim borligini bilib, 'Dudu, o'zingizni asrang' degan g'amxo'r ovozing hamon qulog'imda... Sen ham o'zingni asra, Hanuyim.",
+  "🌙 Yulduzlar sening shirin oromingni qo'riqlasin. Sen dunyodagi eng go'zal ertaklarga munosibsan.",
+  "🌙 Tun qorong'usi ham sening qalbingdagi beg'uborlikni to'sa olmaydi. Xayrli tun, mening yagonam ❤️",
+  "🌙 Bilasanmi, sen tinchgina uxlab yotganingda ham, vaqt bir zumga to'xtamay bizni o'sha maxsus kunga yaqinlashtirmoqda.",
+  "🌙 Hamma uxlagan tunda faqat sening ismingni pichirlab duo qilaman: doim sog' bo'l, doim kulib yur.",
+  "🌙 Yostiqqa bosh qo'yganingda dilingdagi barcha xafagarchiliklar erib ketsin. Seni juda qadrlaydigan Dudung bor.",
+  "🌙 Tun pardasi ostida qoldirilgan eng samimiy sevgim va sog'inchim senga hamroh bo'lsin. Shirin orom ol...",
+  "🌙 Ertalab uyg'onganingda bu xatlarni o'qib, labingda mayin tabassum paydo bo'lishini chin dildan xohlayman 😊"
 ];
 
 const interactiveQuestions = [
   {
-    text: "Kichik bir qiziq savol: Hozir nima qilishni ko'proq xohlarding? 😉",
-    options: ["Issiq kofe va shirinlik ☕", "Musiqa eshitib sayr qilish 🎧"]
+    text: "Eslaylikchi: 5-iyunda tanishganimizda, kim birinchi bo'lib qiziqib qolgan edi? 😉",
+    options: ["Albatta men (Farangiz) 🙈", "Yo'q, sen (Dudu) birinchi ko'rgan zahoti 😍"]
   },
   {
-    text: "Senga qaysi fasl ko'proq yoqadi? 🍂",
-    options: ["Oltin kuz fasli 🍁", "Gullagan bahor fasli 🌸"]
+    text: "Boshida 'Yaxshi ko'raman, lekin sevmayman' derding-ku... Rostini ayt, o'shanda ham aslida sevib bo'lganmiding? 😄",
+    options: ["Ha, ich-ichimdan sevib bo'lgandim 🥰", "Yo'q, rosa qiynab keyin sevganman 😜"]
   },
   {
-    text: "Agar hozir sehrli tayoqchang bo'lsa, qayerga uchib ketarding? ✨",
-    options: ["Dengiz bo'yiga 🌊", "Tinch tog' bag'riga 🏔️"]
+    text: "Tennis raketkalarini nima qilaylik endi? 😂",
+    options: ["Hammasini tashlab yubor, faqat men bilan bo'l! 🎾❌", "Mayli, kechirdim, faqat men bilan o'ynaysan 🤝"]
   },
   {
-    text: "Bugungi kayfiyatingni qaysi emoji ifodalaydi? 😄",
-    options: ["Juda xursandman 🥰", "Charchaganman, lekin kulyapman 😴"]
+    text: "Hozir yuzingda qanday ifoda bor? To'g'risini ayt-a 😉",
+    options: ["Jilmayib o'tiribman, xatlar yoqyapti 😊", "Arazlaganman, lekin baribir kulyapman 🤭"]
   },
   {
-    text: "Kechki payt uchun qaysi biri zo'r? 🎬",
-    options: ["Qiziqarli film ko'rish 🍿", "Sokin musiqa tinglash 🎶"]
+    text: "Dudung senga eng ko'p qaysi nom bilan murojaat qilgani yoqadi? ❤️",
+    options: ["Hanuyim 👑", "Bubuyim 🐣"]
   }
 ];
 
-// So'nggi soatlardagi maxsus xabarlar
+// So'nggi hayajonli soatlar (25-noyabr kechasi)
 const finalHoursMessages = {
-  3: "Qolgan vaqt: atigi 3 soat! Hayajon bormi? Yuragim tezroq ura boshladi... 💓",
-  2: "Qolgan vaqt: 2 soat! Bugun butun dunyo sen uchun bayram qilishga tayyorlanmoqda ✨",
-  1: "Oxirgi 1 soat qoldi! Qani, chuqur nafas ol... Juda oz qoldi, malikam! ⏳🎉",
-  0: "Bir necha daqiqalar qoldi! Sanoq boshlandi... 10... 9... 8... 3... 2... 1... 🚀"
+  3: "Qolgan vaqt: atigi 3 soat! Yuragim xuddi birinchi uchrashuvimizdagidek tez urmoqda... Hanuyim, tayyormisan? 💓",
+  2: "Qolgan vaqt: 2 soat! 5-iyundan boshlangan bu yo'l bugun eng maxsus pallasiga kirmoqda ✨",
+  1: "Oxirgi 1 soat qoldi! Chuqur nafas ol... Dudung senga butun qalbini berishga tayyor! ⏳🎉",
+  0: "Sanoq boshlandi... 10... 5... 3... 2... 1... Bugun dunyodagi eng chiroyli inson tug'ilgan kun! 🚀"
 };
 
-// 26-noyabr 00:00 da chiqadigan eng oxirgi katta tabrik
+// 26-noyabr 00:00 da chiqadigan katta samimiy tabrik
 function getCelebrationMessage(name) {
   return (
-    `🎉🎂 **TUG'ILGAN KUNING MUBORAK BO'LSIN, ${name.toUpperCase()}!** 🎂🎉\n\n` +
-    `Bugun sening eng maxsus, eng sehrli va eng yorug' kuning! Dunyoga kelganing va hayotimda bor bo'lganing uchun cheksiz minnatdorman. ` +
-    `Har bir orzung amalga oshsin, yuzingdagi kulgi hech qachon so'nmasin! ❤️\n\n` +
-    `Uzoq kutilgan on keldi... Senga tayyorlagan maxsus sovg'amni ochish vaqti bo'ldi! 🎁\n\n` +
-    `Quyidagi tugmani bosing va o'z ssyurprizingizni qarshi oling: 👇`
+    `🎉🎂 **TUG'ILGAN KUNING MUBORAK BO'LSIN, MENING HANUYIM, BUBUYIM!** 🎂🎉\n\n` +
+    `2026-yil 5-iyun kuni hayotimga kirib kelganing uchun, kechalari tonggacha gaplashib chiqqan shirin tunlarimiz uchun, ` +
+    `menga diabetimda ham eng katta suyanchiq bo'lib, jon kuydirib mehr berganing uchun senga ming bor rahmat! ❤️\n\n` +
+    `Xatolarim, ahmoqligim va seni xafa qilgan har bir lahzam uchun chin yurakdan, tiz cho'kib kechirim so'rayman. ` +
+    `Sening qadring — mening nafasimdek zarur. Dunyodagi barcha tennisu futbollar, hamma narsa sening bitta mayin kulging oldida oddiy bir xazon, xolos.\n\n` +
+    `Bugun sening kuning, mening yagonam! Sen faqat va faqat cheksiz baxtga loyiqsan. Seni qanchalik sevishimni va sog'inganimni so'z bilan ta'riflab bo'lmaydi.\n\n` +
+    `Uzoq kutilgan on keldi... Senga tayyorlagan maxsus ssyurprizimni ochish vaqti bo'ldi! 🎁\n\n` +
+    `Quyidagi tugmani bosing va o'z sovg'angizni qarshi oling: 👇`
   );
 }
 
