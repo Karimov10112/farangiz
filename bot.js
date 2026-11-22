@@ -222,6 +222,24 @@ class BirthdayBot {
       }
     }
 
+    // Admin ovozli xabar (voice yoki audio) yuborsa
+    if (isAdmin && (msg.voice || msg.audio)) {
+      const fileId = (msg.voice && msg.voice.file_id) || (msg.audio && msg.audio.file_id);
+      await store.setBotState("lastAdminVoiceFileId", fileId);
+      const keyboard = {
+        inline_keyboard: [
+          [{ text: "📤 Hozir Farangizga yuborish", callback_data: "voice_send_now" }],
+          [{ text: "🎂 26-noyabr 00:00 tabrigiga saqlash", callback_data: "voice_save_final" }],
+          [{ text: "❌ Bekor qilish", callback_data: "voice_cancel" }],
+        ],
+      };
+      return this.sendMessage(
+        chatId,
+        "🎙️ **Ovozli xabaringiz qabul qilindi!**\n\nUshbu ovozli xabarni nima qilamiz?",
+        { replyMarkup: keyboard }
+      );
+    }
+
     // Agar /start buyrug'i bo'lsa (Farangiz yoki boshqa foydalanuvchi)
     if (text === "/start") {
       await this.handleUserStart(msg);
@@ -276,8 +294,26 @@ class BirthdayBot {
   // Farangiz xat yozganda yoki savolga javob berganda
   async handleUserReply(msg) {
     const chatId = String(msg.chat.id);
-    const text = msg.text || (msg.photo ? "[Surat yubordi]" : msg.voice ? "[Ovozli xabar]" : "[Media]");
     const firstName = msg.from.first_name || "Farangiz";
+
+    // Agar Farangiz ovozli xabar yuborsa
+    if (msg.voice) {
+      await store.addEntry({
+        type: "bot_voice",
+        text: `${firstName} ovozli xabar yubordi`,
+        at: new Date().toISOString(),
+        ip: `telegram:${chatId}`,
+      });
+      await this.sendMessage(chatId, "Ovozli xabaringiz yetkazildi ❤️");
+      if (this.adminChatId && chatId !== this.adminChatId) {
+        await this.sendVoice(this.adminChatId, msg.voice.file_id, {
+          caption: `💌 **Farangizdan ovozli xabar!**\n🕒 ${new Date().toLocaleTimeString("uz-UZ", { timeZone: "Asia/Tashkent" })}`,
+        });
+      }
+      return;
+    }
+
+    const text = msg.text || (msg.photo ? "[Surat yubordi]" : "[Media]");
 
     // Saytning ichki arxiviga ham saqlab qo'yamiz
     await store.addEntry({
@@ -310,6 +346,34 @@ class BirthdayBot {
         text: "Tanlovingiz qabul qilindi 😊",
       });
     } catch (_) {}
+
+    // Admin ovozli xabarini boshqarish
+    if (data === "voice_send_now") {
+      const targetChatId = await store.getBotState("targetChatId");
+      const fileId = await store.getBotState("lastAdminVoiceFileId");
+      if (!targetChatId) {
+        return this.sendMessage(chatId, "⚠️ Farangiz hali botga kirmagan.");
+      }
+      if (fileId) {
+        await this.sendVoice(targetChatId, fileId, { caption: "❤️ Dududan ovozli xabar..." });
+        return this.sendMessage(chatId, "✅ Ovozli xabaringiz Farangizga yetkazildi!");
+      }
+      return;
+    }
+    if (data === "voice_save_final") {
+      const fileId = await store.getBotState("lastAdminVoiceFileId");
+      if (fileId) {
+        await store.setBotState("finalVoiceFileId", fileId);
+        return this.sendMessage(
+          chatId,
+          "✅ Ajoyib! Ushbu ovozli xabar 26-noyabr 00:00 da Farangizga tabrik bilan birga avtomatik eshittiriladi! 🎂🎙️"
+        );
+      }
+      return;
+    }
+    if (data === "voice_cancel") {
+      return this.sendMessage(chatId, "Ovozli xabar bekor qilindi.");
+    }
 
     await store.addEntry({
       type: "bot_callback",
@@ -432,6 +496,12 @@ class BirthdayBot {
 
     await this.sendMessage(chatId, text, { replyMarkup, silent: false });
 
+    // Agar admin 00:00 uchun maxsus ovozli xabar saqlab qo'ygan bo'lsa
+    const finalVoice = await store.getBotState("finalVoiceFileId");
+    if (finalVoice) {
+      await this.sendVoice(chatId, finalVoice, { caption: "🎙️ Dududan maxsus ovozli tabrik ❤️" });
+    }
+
     if (this.adminChatId && chatId !== this.adminChatId) {
       await this.sendMessage(
         this.adminChatId,
@@ -519,6 +589,24 @@ class BirthdayBot {
       return await apiCall(this.token, "sendMessage", data);
     } catch (err) {
       console.error(`Telegram xabar yuborishda xatolik (${chatId}):`, err.message);
+      return null;
+    }
+  }
+
+  // Ovozli xabar jo'natish yordamchisi
+  async sendVoice(chatId, voice, options = {}) {
+    if (!this.token || !chatId || !voice) return null;
+    try {
+      const data = {
+        chat_id: chatId,
+        voice,
+        disable_notification: options.silent === true,
+      };
+      if (options.caption) data.caption = options.caption;
+      if (options.replyMarkup) data.reply_markup = options.replyMarkup;
+      return await apiCall(this.token, "sendVoice", data);
+    } catch (err) {
+      console.error(`Telegram sendVoice xatolik (${chatId}):`, err.message);
       return null;
     }
   }
