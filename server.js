@@ -120,7 +120,13 @@ app.get("/ping", async (req, res) => {
   try {
     if (bot.checkSchedule) await bot.checkSchedule();
   } catch (_) {}
-  res.json({ ok: true, now: new Date().toISOString() });
+  res.json({
+    ok: true,
+    botRunning: bot.isBotRunning ? bot.isBotRunning() : false,
+    hasToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    hasAdmin: Boolean(process.env.TELEGRAM_CHAT_ID),
+    now: new Date().toISOString()
+  });
 });
 
 // Holat: qolgan vaqt (server vaqti bo'yicha — telefon soatini o'zgartirib aldab bo'lmaydi)

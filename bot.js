@@ -201,6 +201,25 @@ class BirthdayBot {
       if (text === "/test_final") {
         return this.sendFinalCelebration(chatId);
       }
+      if (text === "/test_start") {
+        const unlockAt = this.config.unlockAt || "2026-11-26T00:00:00+05:00";
+        const countdown = getCountdown(unlockAt);
+        const welcome =
+          `[TEST — Farangizga boradigan birinchi xat]:\n\n` +
+          `Assalomu alaykum, Farangiz! ❤️\n\n` +
+          `Ushbu bot sening tug'ilgan kuning arafasida maxsus sen uchun yaratildi. ` +
+          `Katta bayraminggacha (26-noyabr 00:00) har soatda bu yerda senga atalgan samimiy xatlar kelib turadi.\n\n` +
+          `⏳ **${countdown.text}**\n\n` +
+          `O'zingni ehtiyot qil va har bir soatda keladigan xabarlarni tabassum bilan kutib ol! ✨`;
+        return this.sendMessage(chatId, welcome);
+      }
+      if (text === "/test_letter") {
+        const unlockAt = this.config.unlockAt || "2026-11-26T00:00:00+05:00";
+        const countdown = getCountdown(unlockAt);
+        const sampleText = messages.dayMessages[0];
+        const fullText = `[TEST — Soatlik xat namunasi]:\n\n⏳ **${countdown.text}**\n\n${sampleText}`;
+        return this.sendMessage(chatId, fullText);
+      }
     }
 
     // Agar /start buyrug'i bo'lsa (Farangiz yoki boshqa foydalanuvchi)
@@ -470,11 +489,14 @@ class BirthdayBot {
   async sendAdminHelp(chatId) {
     const help =
       `👋 **Salom, Dudu! Bot boshqaruv panelidasiz.**\n\n` +
-      `Buyruqlar ro'yxati:\n` +
+      `Sinov buyruqlari (o'zingizda tekshirish uchun):\n` +
+      `• /test_start — Farangizga boradigan birinchi kirish xabarini ko'rish\n` +
+      `• /test_letter — Soatlik xat qanday ko'rinishda kelishini ko'rish\n` +
+      `• /test_final — 00:00 dagi tug'ilgan kun tabrigi va sayt tugmasini sinab ko'rish\n\n` +
+      `Asosiy buyruqlar:\n` +
       `• /stats — Farangiz kirdimi, nechta xat ketdi va holatni ko'rish\n` +
       `• /send <matn> — Farangizga o'z nomingizdan to'g'ridan-to'g'ri xat yuborish\n` +
       `• /next — Navbatdagi soatlik xatni hoziroq yuborish (test qilish uchun)\n` +
-      `• /test_final — 00:00 dagi tug'ilgan kun tabrigi va sayt havolasini sinab ko'rish\n` +
       `• /pause — Botni vaqtincha to'xtatish\n` +
       `• /resume — Botni davom ettirish\n\n` +
       `💡 *Farangiz nima yozsa yoki qaysi tugmani bossa, sizga shu yerga keladi!*`;
@@ -520,4 +542,8 @@ function checkSchedule() {
   if (activeBot) return activeBot.checkSchedule();
 }
 
-module.exports = { BirthdayBot, startBot, checkSchedule };
+function isBotRunning() {
+  return Boolean(activeBot && activeBot.isRunning);
+}
+
+module.exports = { BirthdayBot, startBot, checkSchedule, isBotRunning };
