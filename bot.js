@@ -61,8 +61,10 @@ function getTashkentTime() {
   const iso = `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+05:00`;
   return {
     date: new Date(iso),
+    day: parseInt(p.day, 10),
     hour: parseInt(p.hour, 10),
     minute: parseInt(p.minute, 10),
+    scheduleKey: `${p.day}_${p.hour}`,
     dateKey: `${p.year}-${p.month}-${p.day}`,
     hourKey: `${p.year}-${p.month}-${p.day}_${p.hour}`,
   };
@@ -265,16 +267,27 @@ class BirthdayBot {
       startedAt: new Date().toISOString(),
     });
 
+    const tashkent = getTashkentTime();
     const unlockAt = this.config.unlockAt || "2026-11-26T00:00:00+05:00";
     const countdown = getCountdown(unlockAt);
 
     // Farangizga tabassum ulashuvchi birinchi xat
-    const welcome =
-      `Assalomu alaykum, ${firstName}! ❤️\n\n` +
-      `Ushbu bot sening tug'ilgan kuning arafasida maxsus sen uchun yaratildi. ` +
-      `Katta bayraminggacha (26-noyabr 00:00) har soatda bu yerda senga atalgan samimiy xatlar kelib turadi.\n\n` +
-      `⏳ **${countdown.text}**\n\n` +
-      `O'zingni ehtiyot qil va har bir soatda keladigan xabarlarni tabassum bilan kutib ol! ✨`;
+    let welcome = "";
+    if (tashkent.hour >= 0 && tashkent.hour < 7) {
+      welcome =
+        `Assalomu alaykum, ${firstName}! ❤️\n\n` +
+        `Ushbu bot sening tug'ilgan kuning arafasida maxsus sen uchun yaratildi. ` +
+        `Katta bayraminggacha (26-noyabr 00:00) har soatda bu yerda senga atalgan samimiy xatlar kelib turadi.\n\n` +
+        `⏳ **${countdown.text}**\n\n` +
+        `Hozir tun, shirin tushlar ko'rib osoyishta orom ol 🌙 Ertalab soat 08:00 dan boshlab har soatda yangi mehrli xatlar seni kutmoqda! ✨`;
+    } else {
+      welcome =
+        `Assalomu alaykum, ${firstName}! ❤️\n\n` +
+        `Ushbu bot sening tug'ilgan kuning arafasida maxsus sen uchun yaratildi. ` +
+        `Katta bayraminggacha (26-noyabr 00:00) har soatda bu yerda senga atalgan samimiy xatlar kelib turadi.\n\n` +
+        `⏳ **${countdown.text}**\n\n` +
+        `O'zingni ehtiyot qil va har bir soatda keladigan xabarlarni tabassum bilan kutib ol! ✨`;
+    }
 
     await this.sendMessage(chatId, welcome);
 
@@ -425,14 +438,15 @@ class BirthdayBot {
       return;
     }
 
-    // 2. Qaysi xabarni tanlash (Ketma-ket to'liq jadval bo'yicha):
-    let msgIndex = (await store.getBotState("msgIndex")) || 0;
+    // 2. Qaysi xabarni tanlash (Aniq soat va sana bo'yicha):
     let chosenText = "";
     let replyMarkup = undefined;
     let silent = false;
 
-    if (messages.fullScheduleMessages && messages.fullScheduleMessages.length > 0) {
-      const item = messages.fullScheduleMessages[msgIndex % messages.fullScheduleMessages.length];
+    const schedule = messages.scheduleByHour || {};
+    const item = schedule[tashkent.scheduleKey];
+
+    if (item) {
       chosenText = item.text;
       silent = item.silent === true;
       if (item.isQuestion && Array.isArray(item.options)) {
@@ -441,8 +455,13 @@ class BirthdayBot {
         };
       }
     } else {
-      // Zaxira varianti
-      chosenText = "Seni juda sog'indim, Hanuyim ❤️ Har bir soniya sen bilan qadrli.";
+      // Agar kutilmagan tungi vaqt bo'lsa
+      if (tashkent.hour >= 0 && tashkent.hour < 7) {
+        silent = true;
+        chosenText = "🌙 Tun sokin... Shirin tushlar ko'rib osoyishta orom ol, Hanuyim ❤️";
+      } else {
+        chosenText = "Seni juda sog'indim, Hanuyim ❤️ Har bir soniya sen bilan qadrli.";
+      }
     }
 
     // Xabarni shakllantirish
