@@ -164,10 +164,14 @@ class BirthdayBot {
 
   // Update larni qayta ishlash
   async handleUpdate(update) {
-    if (update.message) {
-      await this.handleMessage(update.message);
-    } else if (update.callback_query) {
-      await this.handleCallback(update.callback_query);
+    try {
+      if (update.message) {
+        await this.handleMessage(update.message);
+      } else if (update.callback_query) {
+        await this.handleCallback(update.callback_query);
+      }
+    } catch (err) {
+      console.error("handleUpdate xatolik:", err);
     }
   }
 
@@ -218,7 +222,10 @@ class BirthdayBot {
       if (text === "/test_letter") {
         const unlockAt = this.config.unlockAt || "2026-11-26T00:00:00+05:00";
         const countdown = getCountdown(unlockAt);
-        const sampleText = messages.dayMessages[0];
+        const tashkent = getTashkentTime();
+        const schedule = messages.scheduleByHour || {};
+        const item = schedule[tashkent.scheduleKey] || Object.values(schedule)[0];
+        const sampleText = item ? item.text : "Seni juda sog'indim, Hanuyim ❤️";
         const fullText = `[TEST — Soatlik xat namunasi]:\n\n⏳ **${countdown.text}**\n\n${sampleText}`;
         return this.sendMessage(chatId, fullText);
       }

@@ -126,7 +126,10 @@ function getCelebrationMessage(name) {
   );
 }
 
+const dayMessages = Object.values(scheduleByHour).map((item) => item.text);
+
 module.exports = {
   scheduleByHour,
+  dayMessages,
   getCelebrationMessage
 };
