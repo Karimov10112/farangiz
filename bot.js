@@ -371,25 +371,34 @@ class BirthdayBot {
     } catch (_) {}
 
     // AI savoli javoblarini boshqarish
-    if (data === "ai_forgive_no" || data === "ai_forgive_maybe") {
-      const answer = data === "ai_forgive_maybe" ? "Balki..." : "Yo'q";
+    if (data === "ai_forgive_no" || data === "ai_forgive_maybe" || data === "ai_forgive_if") {
+      const answerMap = {
+        ai_forgive_no: "Yo'q",
+        ai_forgive_maybe: "Balki...",
+        ai_forgive_if: "U xatolarini anglasa va qadrlay boshlasa...",
+      };
+      const answer = answerMap[data];
+
       await store.addEntry({
         type: "ai_answer",
         text: `AI savoliga javob: ${answer}`,
         at: new Date().toISOString(),
         ip: `telegram:${chatId}`,
       });
+
       if (this.adminChatId) {
         await this.sendMessage(
           this.adminChatId,
           `💌 *Farangiz AI savoliga javob berdi:*\n\n"${answer}"\n\n🕒 ${new Date().toLocaleTimeString("uz-UZ", { timeZone: "Asia/Tashkent" })}`
         );
       }
-      const reply =
-        data === "ai_forgive_maybe"
-          ? "Rahmat, Farangiz. Bu javob ham o'zi katta bir qadam... ❤️"
-          : "Tushunaman. Vaqt ko'p narsa o'rgatadi. Baribir yaxshi kunlarga umid qil 🌸";
-      return this.sendMessage(chatId, reply);
+
+      const replyMap = {
+        ai_forgive_no: "Tushunaman. Vaqt ko'p narsa o'rgatadi. Baribir yaxshi kunlarga umid qil 🌸",
+        ai_forgive_maybe: "Rahmat, Farangiz. Bu javob ham o'zi katta bir qadam... ❤️",
+        ai_forgive_if: "Bu eng to'g'ri javob. Haqiqiy muhabbat shundayki — kimdir o'zgarishga tayyor bo'lsa, ikkinchisi imkon beradi. Siz ikkalangiz ham baxtga loyiqsiz ❤️",
+      };
+      return this.sendMessage(chatId, replyMap[data]);
     }
 
     // Admin ovozli xabarini boshqarish
@@ -562,6 +571,7 @@ class BirthdayBot {
       inline_keyboard: [
         [{ text: "Yo'q", callback_data: "ai_forgive_no" }],
         [{ text: "Balki...", callback_data: "ai_forgive_maybe" }],
+        [{ text: "U xatolarini anglasa va qadrlay boshlasa...", callback_data: "ai_forgive_if" }],
       ],
     };
 
