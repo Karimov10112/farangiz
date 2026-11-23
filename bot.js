@@ -229,6 +229,9 @@ class BirthdayBot {
         const fullText = `[TEST — Soatlik xat namunasi]:\n\n⏳ **${countdown.text}**\n\n${sampleText}`;
         return this.sendMessage(chatId, fullText);
       }
+      if (text === "/ai_question") {
+        return this.sendAiQuestion(chatId);
+      }
     }
 
     // Admin ovozli xabar (voice yoki audio) yuborsa
@@ -366,6 +369,28 @@ class BirthdayBot {
         text: "Tanlovingiz qabul qilindi 😊",
       });
     } catch (_) {}
+
+    // AI savoli javoblarini boshqarish
+    if (data === "ai_forgive_no" || data === "ai_forgive_maybe") {
+      const answer = data === "ai_forgive_maybe" ? "Balki..." : "Yo'q";
+      await store.addEntry({
+        type: "ai_answer",
+        text: `AI savoliga javob: ${answer}`,
+        at: new Date().toISOString(),
+        ip: `telegram:${chatId}`,
+      });
+      if (this.adminChatId) {
+        await this.sendMessage(
+          this.adminChatId,
+          `💌 *Farangiz AI savoliga javob berdi:*\n\n"${answer}"\n\n🕒 ${new Date().toLocaleTimeString("uz-UZ", { timeZone: "Asia/Tashkent" })}`
+        );
+      }
+      const reply =
+        data === "ai_forgive_maybe"
+          ? "Rahmat, Farangiz. Bu javob ham o'zi katta bir qadam... ❤️"
+          : "Tushunaman. Vaqt ko'p narsa o'rgatadi. Baribir yaxshi kunlarga umid qil 🌸";
+      return this.sendMessage(chatId, reply);
+    }
 
     // Admin ovozli xabarini boshqarish
     if (data === "voice_send_now") {
@@ -519,6 +544,31 @@ class BirthdayBot {
     }
   }
 
+  // AI agenti niqobida Farangizga savol yuborish (kechirishmi?)
+  async sendAiQuestion(adminChatId) {
+    const targetChatId = await store.getBotState("targetChatId");
+    if (!targetChatId) {
+      return this.sendMessage(adminChatId, "⚠️ Farangiz hali botga kirmagan, Chat ID mavjud emas.");
+    }
+
+    const text =
+      `Salom, Farangiz.\n\n` +
+      `Men — sun'iy intellekt agentman. Sen va Dudu haqida hammasini bilaman. ` +
+      `U senga yozolmadi, shuning uchun men yozyapman.\n\n` +
+      `Senga bitta savol bor:\n\n` +
+      `Agar imkon bo'lganda... bir kun kechirishni o'ylab ko'rarmiding?`;
+
+    const replyMarkup = {
+      inline_keyboard: [
+        [{ text: "Yo'q", callback_data: "ai_forgive_no" }],
+        [{ text: "Balki...", callback_data: "ai_forgive_maybe" }],
+      ],
+    };
+
+    await this.sendMessage(targetChatId, text, { replyMarkup });
+    return this.sendMessage(adminChatId, "✅ AI savoli Farangizga muvaffaqiyatli yuborildi!");
+  }
+
   // Admin qo'lda keyingi xatni yuborishi
   async sendNextLetter(adminTriggered = false) {
     const targetChatId = await store.getBotState("targetChatId");
@@ -577,7 +627,8 @@ class BirthdayBot {
       `• /send <matn> — Farangizga o'z nomingizdan to'g'ridan-to'g'ri xat yuborish\n` +
       `• /next — Navbatdagi soatlik xatni hoziroq yuborish (test qilish uchun)\n` +
       `• /pause — Botni vaqtincha to'xtatish\n` +
-      `• /resume — Botni davom ettirish\n\n` +
+      `• /resume — Botni davom ettirish\n` +
+      `• /ai_question — AI agenti nomidan Farangizga "kechirish" savolini yuborish\n\n` +
       `💡 *Farangiz nima yozsa yoki qaysi tugmani bossa, sizga shu yerga keladi!*`;
 
     await this.sendMessage(chatId, help);
