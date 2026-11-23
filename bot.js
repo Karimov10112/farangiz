@@ -480,7 +480,8 @@ class BirthdayBot {
     });
 
     // Holatni yangilash
-    await store.setBotState("msgIndex", msgIndex + 1);
+    const currentCount = ((await store.getBotState("msgIndex")) || 0) + 1;
+    await store.setBotState("msgIndex", currentCount);
     await store.setBotState("lastSentHourKey", tashkent.hourKey);
     await store.setBotState("lastSentAt", new Date().toISOString());
   }
