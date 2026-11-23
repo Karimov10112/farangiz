@@ -84,15 +84,14 @@ function getCountdown(unlockAt) {
   const totalHours = Math.floor(totalMinutes / 60);
   const days = Math.floor(totalHours / 24);
   const remHours = totalHours % 24;
+  const remMinutes = totalMinutes % 60;
 
-  let text = "";
-  if (days > 0) {
-    text = `${days} kun, ${remHours} soat qoldi...`;
-  } else if (totalHours > 0) {
-    text = `${totalHours} soat qoldi...`;
-  } else {
-    text = `${totalMinutes} daqiqa qoldi...`;
-  }
+  const parts = [];
+  if (days > 0) parts.push(`${days} kun`);
+  if (remHours > 0) parts.push(`${remHours} soat`);
+  if (remMinutes > 0 || parts.length === 0) parts.push(`${remMinutes} daqiqa`);
+
+  const text = `${parts.join(", ")} qoldi...`;
 
   return { isTime: false, totalHours, text };
 }
@@ -306,7 +305,7 @@ class BirthdayBot {
       await this.sendMessage(
         this.adminChatId,
         `🔔 **Ajoyib yangilik!**\n\n${firstName} (${username}) botni ishga tushirdi! (/start bosdi).\n` +
-          `Chat ID: \`${chatId}\`\nEndi unga har soatda xatlar avtomatik yuboriladi.`
+        `Chat ID: \`${chatId}\`\nEndi unga har soatda xatlar avtomatik yuboriladi.`
       );
     }
 
@@ -368,7 +367,7 @@ class BirthdayBot {
         callback_query_id: cb.id,
         text: "Tanlovingiz qabul qilindi 😊",
       });
-    } catch (_) {}
+    } catch (_) { }
 
     // AI savoli javoblarini boshqarish
     if (data === "ai_forgive_no" || data === "ai_forgive_maybe" || data === "ai_forgive_if") {
