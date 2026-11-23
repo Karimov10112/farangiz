@@ -115,11 +115,15 @@ function sendTelegramNotification(text, cfg, type = "reply") {
   req.end();
 }
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
 // Ping va uyg'otib turish yo'li (cron-job.org orqali Render uxlamasligi uchun)
-app.get("/ping", async (req, res) => {
-  try {
-    if (bot.checkSchedule) await bot.checkSchedule();
-  } catch (_) {}
+app.get("/ping", (req, res) => {
   res.json({
     ok: true,
     botRunning: bot.isBotRunning ? bot.isBotRunning() : false,
@@ -127,6 +131,10 @@ app.get("/ping", async (req, res) => {
     hasAdmin: Boolean(process.env.TELEGRAM_CHAT_ID),
     now: new Date().toISOString()
   });
+
+  if (bot.checkSchedule) {
+    Promise.resolve().then(() => bot.checkSchedule()).catch((e) => console.error("checkSchedule xatolik:", e));
+  }
 });
 
 // Holat: qolgan vaqt (server vaqti bo'yicha — telefon soatini o'zgartirib aldab bo'lmaydi)
