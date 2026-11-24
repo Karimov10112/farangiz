@@ -104,25 +104,21 @@ const scheduleByHour = {
   "25_15": { text: "Kun yarmidan oshdi... Soat millari 00:00 ga qarab shiddat bilan yaqinlashmoqda. Hayajon kuchayyaptimi? 💓" },
   "25_16": { text: "Bilasanmi, sen mening dunyoyimdagi eng chiroyli ertaksan. Va bu ertak endi hech qachon to'xtamaydi." },
   "25_17": { text: "Hamma arazlaringni, ginalaringni unut. Bugun kechasi sen uchun eng unutilmas onlar boshlanadi ✨" },
-  "25_18": { text: "Kechki payt... Atigi 6 soat qoldi! Dudung senga chin dildan mehr berishga oshiqmoqda." },
-  "25_19": { text: "5 soat qoldi... Qani, kiyimlaringni tayyorlab, ko'zguga qarab jilmay! Bugun butun dunyo sen uchun bayram qiladi." },
-  "25_20": { text: "Atigi 4 soat! Yurak urishimni eshitishingni xohlardim... Seni shunchalik qattiq yaxshi ko'ramanki, Hanuyim ❤️" },
-  "25_21": { text: "⏳ 3 SOAT QOLDI! Hayajon bormi? Dudungning yuragi qinidan chiqib ketay deyapti... Tayyormisan, mening yagonam? 💓" },
-  "25_22": { text: "⏳ 2 SOAT QOLDI! 5-iyundan boshlangan bu go'zal yo'limiz bugun eng sehrli cho'qqisiga chiqadi ✨" },
-  "25_23": { text: "⏳ OXIRGI 1 SOAT! Chuqur nafas ol... Dudung senga tayyorlagan ssyurpriziga sanoqli daqiqalar qoldi! 10... 9... 8... ⏳🎉" }
+  "25_18": { text: "Quyosh botib, shahar chiroqlari yona boshladi... Bilasanmi, butun umrim davomida aynan bugungi oqshomni kutgandekman. Har bir daqiqa meni sen bilan bog'lab turgan mehr rishtalarini yanada kuchaytirmoqda ❤️" },
+  "25_19": { text: "Ko'nglingdagi barcha xavotirlarni, barcha charchoqlarni butunlay unut. Bugun sening qalbing faqat xursandchilik va iliq tuyg'ular bilan to'lishini xohlayman, mening erkatoyim ✨" },
+  "25_20": { text: "Kechki sukunat kirdi... Ko'zlarimni yumsam ham, ochsam ham faqat sening nigohing qarshimda gavdalanadi. Dunyodagi eng toza, eng samimiy sevgim senga atalgan, Hanuyim." },
+  "25_21": { text: "Vaqt shunchalik tezlashib ketgandekki... Dudungning ko'ksidagi hayajonni hech qanday so'z bilan ta'riflab bo'lmaydi. Bu kecha faqat sen uchun haqiqiy mo'jizaga aylanadi, ishonaver 💓" },
+  "25_22": { text: "Bor-yo'g'i ikki qadamgina qoldi... Shu paytgacha aytolmagan, yuragimning eng to'rida saqlab kelgan eng qimmatli hislarim senga oshiqmoqda. Yuzingdagi tabassumni aslo yo'qotma ✨" },
+  "25_23": { text: "Mana, orziqib kutilgan o'sha lahzaga atigi sanoqli daqiqalar qoldi! Yuragingni hovuchlab, chuqur nafas ol... Sening yangi yoshing va bizning eng baxtli sahifamiz boshlanmoqda. Dudung seni dunyolardan ham qattiqroq sevadi! ⏳❤️" }
 };
 
 // 26-NOYABR 00:00 KATTA TUG'ILGAN KUN TABRIGI VA SOVG'A
 function getCelebrationMessage(name) {
   return (
-    `🎉🎂 **TUG'ILGAN KUNING MUBORAK BO'LSIN, MENING HANUYIM, BUBUYIM!** 🎂🎉\n\n` +
-    `2026-yil 5-iyun kuni hayotimga kirib kelganing uchun, kechalari tonggacha gaplashib chiqqan shirin tunlarimiz uchun, ` +
-    `menga diabetimda ham eng katta suyanchiq bo'lib, jon kuydirib mehr berganing uchun senga ming bor rahmat! ❤️\n\n` +
-    `Xatolarim, ahmoqligim va seni xafa qilgan har bir lahzam uchun chin yurakdan kechirim so'rayman. ` +
-    `Sening qadring — mening nafasimdek zarur. Dunyodagi barcha tennisu futbollar, hamma narsa sening bitta mayin kulging oldida oddiy bir xazon, xolos.\n\n` +
-    `Bugun sening kuning, mening yagonam! Sen faqat va faqat cheksiz baxtga loyiqsan. Seni qanchalik sevishimni va sog'inganimni so'z bilan ta'riflab bo'lmaydi.\n\n` +
-    `Uzoq kutilgan on keldi... Senga tayyorlagan maxsus ssyurprizimni ochish vaqti bo'ldi! 🎁\n\n` +
-    `Quyidagi tugmani bosing va o'z sovg'angizni qarshi oling: 👇`
+    `🎉🎂 **Tug'ilgan kuning muborak bo'lsin, mening Hanuyim!** ✨❤️\n\n` +
+    `Bugun sening eng go'zal va maxsus kuning. Seni chin dildan yaxshi ko'raman.\n\n` +
+    `Senga aytmoqchi bo'lgan barcha dil so'zlarim va tayyorlagan ssyurprizim seni saytda kutib turibdi... 🎁\n\n` +
+    `Quyidagi tugmani bos va o'zing uchun ochilgan olamga kir: 👇`
   );
 }
 
