@@ -237,6 +237,18 @@ module.exports = {
     ["Maxsus minnatdorchilik", "5-iyun, 2026 — biz tanishgan kun"]
   ],
 
+  // 7.6. Telegram bot: tug'ilgan kungacha har soatda bitta xat, 26-noyabr 00:00 da sayt havolasi.
+  //   Token: Render → Environment → BIRTHDAY_BOT_TOKEN (bu yerga yozmang!)
+  //   startKey   — unga yuboriladigan havola: t.me/BOT_NOMI?start=hanuyim26
+  //                (boshqa odam /start bossa, bot unga javob bermaydi)
+  //   silentNight — 00:00–07:00 dagi xatlar ovozsiz kelsin (uyg'otib yubormasin)
+  //   Xatlar matni: bot-messages.js
+  bot: {
+    enabled: true,
+    startKey: "hanuyim26",
+    silentNight: true
+  },
+
   // 8. Musiqa ("Kara Sevda")
   music: "music.mp3",
 

@@ -110,6 +110,64 @@ async function clearAll() {
   await pool.query("DELETE FROM replies");
 }
 
+/* ---------- Kalit-qiymat (Telegram bot holati uchun) ---------- */
+const KV_FILE = path.join(__dirname, "data", "kv.json");
+let kvReady = null;
+
+function kvTable() {
+  if (!pool) return Promise.resolve();
+  if (!kvReady) {
+    kvReady = ready.then(() =>
+      pool.query("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)")
+    );
+  }
+  return kvReady;
+}
+
+function readKvFile() {
+  try {
+    if (fs.existsSync(KV_FILE)) return JSON.parse(fs.readFileSync(KV_FILE, "utf8"));
+  } catch (_) {}
+  return {};
+}
+
+async function kvGet(key) {
+  if (pool) {
+    try {
+      await kvTable();
+      const { rows } = await pool.query("SELECT v FROM kv WHERE k = $1", [key]);
+      return rows[0] ? JSON.parse(rows[0].v) : null;
+    } catch (err) {
+      console.error("kv o'qishda xatolik:", err.message);
+    }
+  }
+  const all = readKvFile();
+  return key in all ? all[key] : null;
+}
+
+async function kvSet(key, value) {
+  if (pool) {
+    try {
+      await kvTable();
+      await pool.query(
+        "INSERT INTO kv (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v",
+        [key, JSON.stringify(value)]
+      );
+      return;
+    } catch (err) {
+      console.error("kv yozishda xatolik:", err.message);
+    }
+  }
+  const all = readKvFile();
+  all[key] = value;
+  try {
+    fs.mkdirSync(path.dirname(KV_FILE), { recursive: true });
+    fs.writeFileSync(KV_FILE, JSON.stringify(all, null, 2), "utf8");
+  } catch (err) {
+    console.error("kv faylga yozishda xatolik:", err.message);
+  }
+}
+
 const storageName = () => (pool ? "database" : "file");
 
-module.exports = { addEntry, listEntries, clearAll, storageName };
+module.exports = { addEntry, listEntries, clearAll, storageName, kvGet, kvSet };
