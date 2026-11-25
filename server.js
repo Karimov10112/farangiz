@@ -3,6 +3,24 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 
+// .env faylidan o'qish (agar mavjud bo'lsa)
+try {
+  const envPath = path.join(__dirname, ".env");
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const idx = trimmed.indexOf("=");
+      if (idx > 0) {
+        const k = trimmed.substring(0, idx).trim();
+        const v = trimmed.substring(idx + 1).trim();
+        if (!process.env[k]) process.env[k] = v;
+      }
+    }
+  }
+} catch (_) {}
+
 const app = express();
 const smallJson = express.json({ limit: "50kb" });
 // Rasm yuklash yo'li o'zining katta cheklovidan foydalanadi
@@ -10,6 +28,7 @@ app.use((req, res, next) => (req.path === "/api/upload" ? next() : smallJson(req
 
 const CONTENT_DIR = path.join(__dirname, "content");
 const store = require("./store");
+const bot = require("./bot");
 
 // config.js har so'rovda qayta o'qiladi — o'zgartirsangiz, server qayta ishga tushirish shart emas
 function loadConfig() {
@@ -95,6 +114,28 @@ function sendTelegramNotification(text, cfg, type = "reply") {
   req.write(payload);
   req.end();
 }
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
+// Ping va uyg'otib turish yo'li (cron-job.org orqali Render uxlamasligi uchun)
+app.get("/ping", (req, res) => {
+  res.json({
+    ok: true,
+    botRunning: bot.isBotRunning ? bot.isBotRunning() : false,
+    hasToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    hasAdmin: Boolean(process.env.TELEGRAM_CHAT_ID),
+    now: new Date().toISOString()
+  });
+
+  if (bot.checkSchedule) {
+    Promise.resolve().then(() => bot.checkSchedule()).catch((e) => console.error("checkSchedule xatolik:", e));
+  }
+});
 
 // Holat: qolgan vaqt (server vaqti bo'yicha — telefon soatini o'zgartirib aldab bo'lmaydi)
 app.get("/api/status", (req, res) => {
@@ -474,4 +515,7 @@ app.use("/vendor", express.static(path.join(__dirname, "public", "vendor"), { ma
 app.use(express.static(path.join(__dirname, "public")));
 
 const port = process.env.PORT || loadConfig().port || 3000;
-app.listen(port, () => console.log(`✨ Sayt ishlayapti: http://localhost:${port}`));
+app.listen(port, () => {
+  console.log(`✨ Sayt ishlayapti: http://localhost:${port}`);
+  bot.startBot(loadConfig());
+});
