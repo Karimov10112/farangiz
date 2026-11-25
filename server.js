@@ -187,7 +187,6 @@ const EVENT_TYPES = {
   ball: "🔮 Sehrli sharga savoli",
   selfie: "📸 Selfisi",
   drawing: "🎨 Chizgan rasmi",
-  bot: "🤖 Telegram botda",
 };
 
 // Rasm (selfi, chizilgan rasm) faqat shunday ko'rinishda qabul qilinadi
@@ -459,14 +458,6 @@ app.post("/admin/clear", async (req, res) => {
   res.redirect("/admin/replies?key=" + encodeURIComponent(req.query.key));
 });
 
-// Telegram bot: tug'ilgan kungacha har soatda xat, 00:00 da sayt havolasi
-const bot = require("./bot");
-bot.mount(app, express, loadConfig, (type, text) => {
-  const entry = { type, text: String(text).slice(0, 2000), at: new Date().toISOString(), ip: "telegram" };
-  console.log("💌 YANGI JAVOB [" + type + "]:", JSON.stringify(entry));
-  store.addEntry(entry);
-});
-
 // Yuzni aniqlash (MediaPipe) WASM fayli: 14.6 MB o'rniga gzip bilan siqilgan 4 MB beriladi
 app.get("/vendor/mediapipe/wasm/vision_wasm_internal.wasm", (req, res) => {
   res.set({
@@ -483,7 +474,4 @@ app.use("/vendor", express.static(path.join(__dirname, "public", "vendor"), { ma
 app.use(express.static(path.join(__dirname, "public")));
 
 const port = process.env.PORT || loadConfig().port || 3000;
-app.listen(port, () => {
-  console.log(`✨ Sayt ishlayapti: http://localhost:${port}`);
-  bot.start();
-});
+app.listen(port, () => console.log(`✨ Sayt ishlayapti: http://localhost:${port}`));
