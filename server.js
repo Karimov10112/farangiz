@@ -145,6 +145,8 @@ app.get("/api/status", (req, res) => {
     serverNow: Date.now(),
     unlockAt: isNaN(unlockTime) ? Date.now() : unlockTime,
     unlocked: isUnlocked(c),
+    thanksOnly: c.thanksOnly === true,
+    thanksText: c.thanksOnly === true ? String(c.thanksText || "Hammasi uchun rahmat ❤️") : undefined,
   });
 });
 

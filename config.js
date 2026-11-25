@@ -13,6 +13,11 @@ module.exports = {
   // 3. Sinov rejimi: true — darhol ochiladi, false — faqat unlockAt vaqtida
   testMode: false,
 
+  // 3.1. "Rahmat" rejimi: true bo'lsa, saytga kirgan odam FAQAT "Hammasi uchun rahmat ❤️" ni ko'radi —
+  //      qulf, sovg'a, xat va boshqa hech narsa chiqmaydi. Eski saytni qaytarish uchun: false
+  thanksOnly: true,
+  thanksText: "Hammasi uchun rahmat ❤️",
+
   // 4. Tortdagi shamlar soni (1 dan 12 gacha)
   candles: 11,
 
