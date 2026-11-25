@@ -2676,3 +2676,13 @@ input, textarea {
 
 .ticket-actions a.btn { text-decoration: none; }
 .ticket-note { max-width: 300px; }
+
+/* "Rahmat" rejimi */
+.thanks-text {
+  font-size: clamp(2.6rem, 12vw, 5rem);
+  line-height: 1.25;
+  color: var(--gold);
+  text-shadow: 0 0 30px var(--gold-glow);
+  padding: 0 16px;
+  animation: fadeUp 1.8s ease both;
+}

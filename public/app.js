@@ -580,6 +580,17 @@ async function checkStatusAndInit() {
 
   serverOffset = statusData.serverNow - Date.now();
 
+  // "Rahmat" rejimi: faqat bitta yozuv, boshqa hech narsa
+  if (statusData.thanksOnly) {
+    if (countdownTimer) clearInterval(countdownTimer);
+    $("#thanks-text").textContent = statusData.thanksText || "Hammasi uchun rahmat ❤️";
+    document.title = "❤️";
+    const music = $("#music-toggle");
+    if (music) music.classList.add("hidden");
+    showScene("thanks");
+    return;
+  }
+
   if (statusData.unlocked) {
     return loadContentAndUnlock();
   }
