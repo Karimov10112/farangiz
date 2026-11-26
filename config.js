@@ -15,7 +15,7 @@ module.exports = {
 
   // 3.1. "Rahmat" rejimi: true bo'lsa, saytga kirgan odam FAQAT "Hammasi uchun rahmat ❤️" ni ko'radi —
   //      qulf, sovg'a, xat va boshqa hech narsa chiqmaydi. Eski saytni qaytarish uchun: false
-  thanksOnly: true,
+  thanksOnly: false,
   thanksText: "Hammasi uchun rahmat ❤️",
 
   // 4. Tortdagi shamlar soni (1 dan 12 gacha)
